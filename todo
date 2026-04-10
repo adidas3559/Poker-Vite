@@ -1,0 +1,63 @@
+TODO
+
+BIG REFACTOR!:
+Talked to chatgpt (lol) and it was saying I shouldn't be mutating global state. First it gave how to do busted players.
+Then was saying no mutating global state, that will be too hard to debug for multiplayer. Instead use pure functions.
+Look at bottom of file "ARCHITECTURE NOTES FOR REFACTOR" section
+
+
+For Game model:
+get testing working so we can test bugs
+
+Handle All ins + side pots
+Get if player only can match some of the pot working
+Get if small or big blind can only handle a small part of the blind
+
+
+LATER
+refactor and do animations + more css stuff
+with css, maybe get chips working? Or just generic blob amount moves around
+get amount of players and player names working, ie make menus
+Get report bug button that captues the game state so we can replicate
+Get multiplayer working
+
+
+POSSIBLE BUG
+will the fact that the same numbers get added to relevantCards as generic numbers affect something like flushes kickers?
+Probably not since flushes already have 5, the limit for kicker cards
+
+
+BUGS
+
+when testing something else, there was a game where there was no winners. I just called the whole game, nothing with raises or folds.
+The highest players data should've given it to max since he had an ace (14).
+Also caitlyn had an ace high card, and didn't appear in highestPlayers.
+Took screenshots for this on desktop
+
+When Testing, found something similar to above where it said alissa was winner with a high card, when she had very low cards.
+Plus, caitlyn actually had a pair of queens (other people had pairs too). So whole highestPlayer data is broken rn
+
+
+COMPLETED
+extract return object in a method for handlers so each handler will just return full game state
+Doing this, we can add a "game over" state in gamestate and create a this.winners for front end to know winners
+After this, we can finally do a new game
+Get multiple rounds working
+currently when a new round happens and Game.ts deals cards, it's the same order everytime rather than the small blind drawing first
+Get players busting working
+When Big blind is out, (possibly small blind too) ui isn't properly representing this
+get proper raise input working/validation
+Get if only 2 or 3 players left working
+
+If everyone but max and blake fold immediately, it's an infinite loop of checking because the lastplayerraise field is unreachable?
+Likely need to figure out better way to track last player than lastplayerraise
+
+
+ARCHITECTURE NOTES FOR REFACTOR!!:
+I was looking at this as a object oriented project. But since it's a game, it's more of a state machine.
+OOP is more about models with internal mutable state.
+State Machines (functional programming) is more about pure functions transformming game state.
+State machines are much better for multiplayer games, especially ones like poker.
+
+
+

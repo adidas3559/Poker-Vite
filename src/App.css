@@ -1,0 +1,215 @@
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 20px;
+}
+
+.navLogo {
+  font-family: 'Danfo';
+  color: #c12833;
+  font-size: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+/* .navLogo:hover {
+  color: #fed37d;
+} */
+
+.navLogo img {
+  height: 80px;
+}
+
+
+
+.gameWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+}
+
+.table {
+  position: relative;
+  
+}
+
+.playerHand {
+  position: absolute;
+  display: flex;
+  gap: 10px;
+}
+
+.player1 {
+  left: 0;
+  top: 0;
+}
+
+.player2 {
+  left: 0;
+  bottom: 0;
+}
+
+.player3 {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.player4 {
+  right: 0;
+  bottom: 0;
+}
+
+.player5 {
+  right: 0;
+  top: 0;
+}
+
+.player6 {
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+}
+
+.card {
+  box-shadow: 5px 10px #888888;
+  background-color: #f7fae8;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
+  -webkit-box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
+  -moz-box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
+}
+
+.playerHand .card {
+  width: 50px;
+  transition: all 100ms ease-in;
+  transform-origin: bottom center;
+}
+
+.playerHand .card:first-child {
+  transform: rotate(-6deg);
+}
+
+.playerHand .card:last-child {
+  transform: rotate(6deg);
+}
+
+.playerHand:hover .card {
+  width: 120px;
+  z-index: 10;
+}
+
+.playerHand:hover .card:first-child {
+  transform: rotate(-6deg);
+}
+
+.playerHand:hover .card:last-child {
+  transform: rotate(6deg);
+}
+
+/* .playerHand.player6 .card {
+  width: 120px;
+} */
+
+.tableCards {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tableCards .card {
+  width: 60px;
+  transition: all 100ms ease-in;
+}
+
+.tableCards:hover .card {
+  width: 120px;
+  z-index: 11;
+  /* height: 120px; */
+}
+
+.card img {
+  height: 100%;
+  width: 100%;
+}
+
+.playerHandName {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 120%);
+  font-weight: 700;
+  border-radius: 12px;
+  background-color: #c12833;
+  color: white;
+  padding: 5px 15px;
+}
+
+.pin {
+  position: absolute;
+  bottom: -73px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  text-align: center;
+  background-color: white;
+  padding: 2px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.drawBtn {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  left: 0;
+  margin-left: 200px;
+}
+
+
+
+/* Helper Classes */
+.flex-centered {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.bg-vintage {
+  background-color: #fff4bd;
+}
+
+.btn {
+  padding: 15px 20px;
+  background-color: #c12833;
+  color: #fff4bd;
+  font-family: 'Titan One';
+  margin-bottom: 20px;
+  border: none;
+  transform: skew(-15deg, 0);
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #551116;;
+  color: #fff4bd
+}
+
+.text-centered {
+  text-align: center;
+}

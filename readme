@@ -1,0 +1,24 @@
+
+
+
+this is using the modern version of react
+In order to switch on company computer, I'm using NVM, node version manager
+
+nvm is tricky in that the terminal forget I can use it
+if I try to reinstall nvm with:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+it will then remember that it has it installed.
+
+DO NOT close terminal like it recommends.
+it gives two commands you can run to use nvm without closing terminal
+run those two commands and you can now use nvm.
+
+if you close that terminal window, you must run the curl install again
+
+
+to switch to most up to date version, use command:
+nvm use 24.11.1
+
+then do
+npm run dev
+
