@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'Chinese Rocks';
+  src: url('/assets/fonts/chinese-rocks-free/chinese rocks rg.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

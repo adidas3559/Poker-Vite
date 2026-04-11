@@ -127,10 +127,6 @@ const GameView = () => {
   return (
     <>
       <div className="gameWrapper">
-        <p>
-          Game State: {gameState} <br />
-          Current Bet: {currentBet} <br />
-        </p>
         {
           gameState === 'none' &&
           <div className='drawBtn'>
@@ -198,6 +194,10 @@ const GameView = () => {
         <div className="table">
           <img src={table1} alt="table" />
 
+          <p className='gameState'>
+            Total Pot: {pot.toLocaleString()} &nbsp;|&nbsp; {gameState}
+          </p>
+
           <div className='tableCards'>
             {
               tableCards.map(card => (
@@ -213,22 +213,30 @@ const GameView = () => {
                 return;
               }
               return (
-                <div className={`playerHand player${index + 1}`} key={`playerHand-${index+1}`}>
-                  <CardFront card={hand[0] || null} />
-                  <CardFront card={hand[1] || null} />
-                  <span className='playerHandName'>{player.name}</span>
-                  {
-                    index === dealerIndex &&
-                    <span className="pin dealer">Dealer</span>
-                  }
-                  {
-                    index === getBlindIndex(dealerIndex) &&
-                    <span className="pin smallBlind">Small</span>
-                  }
-                  {
-                    index === getBlindIndex(dealerIndex + 1) &&
-                    <span className="pin bigBlind">Big</span>
-                  }
+                <div className={`playerHand player${index + 1}${player.folded ? ' folded' : ''}`} key={`playerHand-${index+1}`}>
+                  <div className='playerHandContent'>
+                    <div className='cardWrapper'>
+                      <CardFront card={hand[0] || null} />
+                      <CardFront card={hand[1] || null} />
+                    </div>
+                    <div className={`playerHandName${index === currentPlayerIndex ? ' active' : ''}`}>
+                      <span className='name'>{player.name}</span>
+                      <hr />
+                      <span className='chips'>{player.chips.toLocaleString()}</span>
+                    </div>
+                    {
+                      index === dealerIndex &&
+                      <span className="pin dealer">Dealer</span>
+                    }
+                    {
+                      index === getBlindIndex(dealerIndex) &&
+                      <span className="pin smallBlind">Small</span>
+                    }
+                    {
+                      index === getBlindIndex(dealerIndex + 1) &&
+                      <span className="pin bigBlind">Big</span>
+                    }
+                  </div>
                 </div>
               );
             })
