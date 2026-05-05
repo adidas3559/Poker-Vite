@@ -8,6 +8,7 @@ import { cTestDealCards, cRaiseHandler, cCheckHandler, cCallHandler, cFoldHandle
 
 const GameView = () => {
   type states = 'none' | 'preflop' | 'flop' | 'turn' | 'river' | 'end';
+  type nestedPlayers = (Player | Player[])[];
   type reponse = {
     gamestate: states,
     tableCards: Card[],
@@ -15,7 +16,7 @@ const GameView = () => {
     pot: number,
     currentBet: number,
     players: Player[],
-    winners: Player[],
+    winners: nestedPlayers,
     error: string,
   }
 
@@ -94,7 +95,7 @@ const GameView = () => {
     stateUpdate(response);
   }
 
-  const declareWinner = (winners: Player[]) => {
+  const declareWinner = (winners: nestedPlayers) => {
     // This will be a FE function that plays some animation declaring winner
     // DO NOT do any player logic here. This will all be done in the BE
     console.log('winners', winners);

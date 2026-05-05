@@ -9,8 +9,6 @@ Look at bottom of file "ARCHITECTURE NOTES FOR REFACTOR" section
 For Game model:
 get testing working so we can test bugs
 
-Handle All ins + side pots
-Get if player only can match some of the pot working
 Get if small or big blind can only handle a small part of the blind
 
 
@@ -51,6 +49,18 @@ Get if only 2 or 3 players left working
 
 If everyone but max and blake fold immediately, it's an infinite loop of checking because the lastplayerraise field is unreachable?
 Likely need to figure out better way to track last player than lastplayerraise
+
+Handle All ins + side pots
+Get if player only can match some of the pot working
+
+I have made a simpler way to grab the 5 most relevant card values.
+We'll need to rewrite ContestHands in game.ts
+Now we'll need to iterate through the remaining players, sort them by their best hand, 
+then sort each group of best hands by the highest of the 5 card value arrays.
+Once all players are sorted, if any are truly equal then they tie.
+Now we know 1st place, 2nd place, etc we can divvy the pot
+The most any player can earn is (their last current bet * number of players left at the end).
+Have a paper explaining this.
 
 
 ARCHITECTURE NOTES FOR REFACTOR!!:
