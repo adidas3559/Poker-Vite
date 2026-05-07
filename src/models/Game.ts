@@ -406,7 +406,7 @@ class Game {
   }
 
   public declareWinner = (winners: nestedPlayers) => {
-  console.log('🚀 ~ Game ~ winners:', winners);
+    console.log('🚀 ~ Game ~ winners:', winners);
 
     
 
