@@ -1,0 +1,304 @@
+.mobile-wrapper {
+  width: 100vw;
+  height: 100vh;
+  background-color: #121212;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Table area ── */
+.mobile-table-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Landscape table image rotated to fill portrait area.
+   height: 100vw → becomes visual width after rotation.
+   width: 150vh  → becomes visual height after rotation (overshoots; clipped by overflow:hidden). */
+.mobile-table-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 100vw;
+  /* width: 150vh; */
+  transform: translate(-50%, -50%) rotate(90deg);
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Community cards + pot centered on table */
+.mobile-center-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+  z-index: 5;
+}
+.mobile-center-info.expanded {
+  z-index: 11;
+}
+
+.mobile-community-cards {
+  display: flex;
+  gap: 5px;
+  cursor: pointer;
+  position: absolute;
+  bottom: -80px;
+}
+
+.mobile-community-cards .card {
+  width: 36px;
+  transition: width 150ms ease-in;
+}
+
+.mobile-center-info.expanded .card {
+  width: 72px;
+}
+
+.mobile-pot-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.mobile-pot-info span {
+  font-size: 14px;
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
+}
+
+.mobile-pot-info .pot {
+  background: rgba(0, 0, 0, 0.55);
+  color: orange;
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  white-space: nowrap;
+  padding: 5px 18px;
+  border-radius: 20px;
+}
+
+/* ── Seats ── */
+.mobile-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  z-index: 10;
+  cursor: pointer;
+  transition: opacity 200ms;
+}
+
+.mobile-seat.folded {
+  z-index: 10;
+}
+
+.mobile-seat.folded {
+  opacity: 0.45;
+}
+
+/* Seat positions — clockwise from user (bottom) */
+.mobile-seat-1 {
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.mobile-seat-2 {
+  bottom: 22%;
+  left: 2%;
+}
+.mobile-seat-3 {
+  top: 38%;
+  left: 0%;
+  transform: translateY(-50%);
+}
+.mobile-seat-4 {
+  top: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.mobile-seat-5 {
+  top: 38%;
+  right: 0%;
+  transform: translateY(-50%);
+}
+.mobile-seat-6 {
+  bottom: 22%;
+  right: 2%;
+}
+.mobile-seat-1 .mobile-bet-indicator {
+  transform: translate(-120%, 30px);
+}
+.mobile-seat-2 .mobile-bet-indicator {
+  transform: translate(120%, 10px);
+}
+.mobile-seat-3 .mobile-bet-indicator {
+  transform: translate(120%, 10px);
+}
+.mobile-seat-4 .mobile-bet-indicator {
+  transform: translate(-120%, 10px);
+}
+.mobile-seat-5 .mobile-bet-indicator {
+  left: 0;
+  right: inherit;
+  transform: translate(-120%, 10px);
+}
+.mobile-seat-6 .mobile-bet-indicator {
+  transform: translate(-120%, 10px);
+  left: 0;
+  right: inherit;
+}
+
+/* ── Nameplate ── */
+.mobile-nameplateWrapper {
+  position: relative;
+}
+.mobile-nameplate {
+  background-color: rgba(20, 20, 20, 0.92);
+  border: 1.5px solid #555;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 72px;
+  line-height: 1.2;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+}
+
+.mobile-nameplate.active {
+  border-color: rgba(193, 40, 51, 0.7);
+  box-shadow: 0 0 12px rgba(193, 40, 51, 0.7);
+}
+
+.mobile-nameplate .m-name {
+  font-size: 16px;
+  color: white;
+}
+
+.mobile-nameplate .m-chips {
+  font-size: 18px;
+  color: #73ea9f;
+  font-weight: 700;
+}
+
+/* ── Bet indicator ── */
+.mobile-bet-indicator {
+  font-size: 15px;
+  color: orange;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 2px 10px;
+  border-radius: 100%;
+  position: absolute;
+  right: 0;
+}
+
+/* ── Cards — skewed under nameplate, click to expand ── */
+.mobile-card-wrapper {
+  display: flex;
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+}
+
+.mobile-card-wrapper .card {
+  width: 50px;
+  transition: all 100ms ease-in;
+  transform-origin: bottom center;
+}
+
+.mobile-card-wrapper .card:first-child {
+  transform: rotate(-6deg);
+  z-index: 1;
+}
+
+.mobile-card-wrapper .card:last-child {
+  transform: rotate(6deg);
+  margin-left: -24px;
+  z-index: 2;
+}
+
+/* Expanded state (click to toggle) */
+.mobile-seat.expanded .mobile-card-wrapper .card {
+  width: 120px;
+  z-index: 10;
+}
+
+.mobile-seat.expanded .mobile-card-wrapper .card:last-child {
+  margin-left: -10px;
+}
+
+/* ── Pins ── */
+.mobile-seat .pin {
+  position: static;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  font-size: 14px;
+  padding: 1px 6px;
+}
+
+/* ── Action panel ── */
+.mobile-actions {
+  height: 138px;
+  background-color: #1c1c1c;
+  border-top: 2px solid #333;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  box-sizing: border-box;
+}
+
+.mobile-full-btn {
+  font-size: 20px;
+}
+
+.mobile-raise-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-raise-input {
+  flex: 1;
+  background-color: #2e2e2e;
+  border: 2px solid #7e7e7e;
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: white;
+  font-family: 'Chinese Rocks';
+  font-size: 15px;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.mobile-raise-input:focus {
+  border-color: #c12833;
+}
+
+.mobile-action-buttons {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+
+.mobile-action-buttons .btn {
+  font-size: 16px;
+  margin-bottom: 0;
+}

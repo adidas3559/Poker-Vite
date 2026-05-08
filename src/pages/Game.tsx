@@ -1,4 +1,5 @@
 import table1 from '../assets/table1.png';
+import './Game.css';
 import CardFront from './CardFront';
 import Card from '../models/Card';
 import Player from '../models/Player';

@@ -29,229 +29,6 @@ h1, p, span, a {
 
 
 
-.gameWrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  position: relative;
-  margin-top: 100px;
-}
-
-.table {
-  position: relative;
-  
-}
-
-.playerHand {
-  position: absolute;
-  display: flex;
-  gap: 10px;
-  z-index: 12;
-}
-
-.player1 {
-  left: 0;
-  top: 0;
-}
-
-.player2 {
-  left: 0;
-  bottom: 0;
-}
-
-.player3 {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.player4 {
-  right: 0;
-  bottom: 0;
-}
-
-.player5 {
-  right: 0;
-  top: 0;
-}
-
-.player6 {
-  left: 50%;
-  transform: translateX(-50%);
-  top: 0;
-}
-
-.card {
-  box-shadow: 5px 10px #888888;
-  background-color: #f7fae8;
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
-  -webkit-box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
-  -moz-box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
-}
-
-.cardWrapper {
-  display: flex;
-  position: absolute;
-  transform: translate(-50%, -100%);
-}
-
-.playerHand .card {
-  width: 50px;
-  transition: all 100ms ease-in;
-  transform-origin: bottom center;
-}
-
-.playerHand .cardWrapper .card:first-child {
-  transform: rotate(-6deg);
-  z-index: 1;
-}
-
-.playerHand .cardWrapper .card:last-of-type {
-  transform: rotate(6deg);
-  margin-left: -40px;
-  z-index: 2;
-}
-
-.playerHand:hover .cardWrapper .card {
-  width: 120px;
-  z-index: 10;
-}
-
-.playerHand:hover .cardWrapper .card:first-child {
-  transform: rotate(-6deg);
-}
-
-.playerHand:hover .cardWrapper .card:last-child {
-  transform: rotate(6deg);
-  margin-left: -20px;
-}
-
-/* .playerHand.player6 .card {
-  width: 120px;
-} */
-
-.gameState {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -318%);
-  margin: 0;
-  z-index: 10;
-  background: rgba(0, 0, 0, 0.55);
-  color: #dad400;
-  font-weight: 700;
-  font-size: 14px;
-  text-align: center;
-  white-space: nowrap;
-  padding: 5px 18px;
-  border-radius: 20px;
-}
-
-.tableCards {
-  display: flex;
-  gap: 10px;
-  position: absolute;
-  z-index: 11;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.tableCards .card {
-  width: 60px;
-  transition: all 100ms ease-in;
-}
-
-.tableCards:hover .card {
-  width: 120px;
-  z-index: 11;
-  /* height: 120px; */
-}
-
-.card img {
-  height: 100%;
-  width: 100%;
-}
-
-.playerHand.folded .cardWrapper {
-  opacity: 0.6;
-}
-
-.playerHand.folded .playerHandName {
-  opacity: 0.6;
-}
-
-.playerHandName {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%, 70%);
-  background-color: #1c1c1c;
-  color: white;
-  padding: 8px 24px 10px;
-  /* clip-path: polygon(0% 0%, 100% 0%, 92% 100%, 8% 100%); */
-  border-radius: 7px;
-  border: 2px solid #7e7e7e;
-  z-index: 5;
-  text-align: center;
-  min-width: 110px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.playerHandName .name {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.playerHandName hr {
-  border: none;
-  border-top: 4px solid #7e7e7e;
-  border-radius: 12px;
-  margin: 0;
-  width: 100%;
-}
-
-.playerHandName .chips {
-  font-size: 15px;
-  color: #73ea9f;
-  font-weight: 700;
-}
-
-.playerHandName.active {
-  box-shadow: 0 0 16px 6px rgba(117, 19, 19, 0.85);
-}
-
-.pin {
-  position: absolute;
-  bottom: -90px;
-  left: 50%;
-  transform: translate(-50%, 0%);
-  text-align: center;
-  background-color: #551116;
-  color: white;
-  padding: 2px 12px;
-  border-radius: 30px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.drawBtn {
-  position: absolute;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  left: 0;
-  margin-left: 200px;
-}
-
-
-
 /* Helper Classes */
 .flex-centered {
   display: flex;
@@ -268,20 +45,34 @@ h1, p, span, a {
 }
 
 .btn {
-  padding: 10px 20px;
-  background-color: #c12833;
-  color: #fff4bd;
+  /* padding: 10px 20px; */
+  /* background-color: #c12833; */
+  color: white;
   font-family: 'Chinese Rocks';
-  font-size: 18px;
+  font-size: 20px;
   margin-bottom: 10px;
   border: none;
-  transform: skew(-15deg, 0);
+  text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.9);
+  /* transform: skew(-15deg, 0); */
   cursor: pointer;
+  position: relative;
+  background: none;
 }
 
-.btn:hover {
-  background-color: #551116;
-  color: #fff4bd
+.btn::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0%;
+  height: 3px;
+  background-color: #c12833;
+  transition: width 200ms ease-in-out;
+}
+
+.btn:hover::after {
+  width: 100%;
 }
 
 .text-centered {

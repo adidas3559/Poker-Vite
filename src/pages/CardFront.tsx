@@ -1,12 +1,11 @@
 
-import Card from "../models/Card";
+import type { CardState } from '../types/GameState';
 
 interface props {
-  card: Card;
+  card: CardState;
 }
 
 const CardFront = (props: props) => {
-// console.log('🚀 ~ HomePage ~ card:', props.card);
 
   const renderCard = () => {
     // let cardType: Suit;

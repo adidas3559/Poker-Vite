@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import './Game.css';
 import CardFront from './CardFront';
 import Player from '../models/Player';
 import Card from '../models/Card';

@@ -1,9 +1,8 @@
 TODO
 
-BIG REFACTOR!:
-Talked to chatgpt (lol) and it was saying I shouldn't be mutating global state. First it gave how to do busted players.
-Then was saying no mutating global state, that will be too hard to debug for multiplayer. Instead use pure functions.
-Look at bottom of file "ARCHITECTURE NOTES FOR REFACTOR" section
+I had it all working before refactor but now it has general bugs like blinds getting confused after a few rounds,
+players hitting negative numbers, and maybe more
+
 
 
 For Game model:
@@ -61,6 +60,11 @@ Once all players are sorted, if any are truly equal then they tie.
 Now we know 1st place, 2nd place, etc we can divvy the pot
 The most any player can earn is (their last current bet * number of players left at the end).
 Have a paper explaining this.
+
+BIG REFACTOR!:
+Talked to chatgpt (lol) and it was saying I shouldn't be mutating global state. First it gave how to do busted players.
+Then was saying no mutating global state, that will be too hard to debug for multiplayer. Instead use pure functions.
+Look at bottom of file "ARCHITECTURE NOTES FOR REFACTOR" section
 
 
 ARCHITECTURE NOTES FOR REFACTOR!!:

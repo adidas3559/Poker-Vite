@@ -1,19 +1,39 @@
-import { Link } from 'react-router-dom';
-import TestGameView from './TestGameView';
-
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import './JoinGame.css';
 
 const JoinGame = () => {
+  const [roomCode, setRoomCode] = useState('');
+  const [nickname, setNickname] = useState('');
+  const navigate = useNavigate();
 
   return (
-   <>
-      <h1>Join Game!</h1>
+    <div className="lobby-wrapper">
+      <div className="lobby-card">
+        <h1 className="lobby-title">Join Game</h1>
 
-      <Link to="/join-game">Join Game</Link>
-      <Link to="/host-game">Host Game</Link>
+        <input
+          className="lobby-input"
+          type="text"
+          placeholder="Room code"
+          value={roomCode}
+          onChange={(e) => setRoomCode(e.target.value)}
+        />
 
-      <TestGameView />
-   </>
-  )
-}
+        <input
+          className="lobby-input"
+          type="text"
+          placeholder="Nickname"
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+        />
 
-export default JoinGame
+        <button className="btn" onClick={() => navigate('/test-game')}>
+          Join
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default JoinGame;
