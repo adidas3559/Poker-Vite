@@ -242,7 +242,6 @@ function combineDuplicateHands(players: HandRanking[]): nestedHandRanking {
 }
 
 const contestHands = (highestPlayers: HandRanking[]) => {
-  console.log('🚀 ~ contestHands ~ highestPlayers:', highestPlayers);
   const highestPlayersMap = new Map();
   highestPlayers.forEach(player => {
     const hand = player.highestHand;

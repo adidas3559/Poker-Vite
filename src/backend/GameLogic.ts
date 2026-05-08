@@ -1,5 +1,5 @@
 import type { CardState, GameState, PlayerState, GamePhase } from "../types/GameState"
-import { createDeck, shuffleDeck, getNextActiveIndex, howManyActivePlayers, drawCard, getLeftOfDealer, getHandRanking, contestHands } from './utils';
+import { createDeck, shuffleDeck, getNextActiveIndex, howManyActivePlayers, drawCard, getLeftOfDealer, getHandRanking, contestHands, copyPlayers } from './utils';
 
 
 
@@ -41,8 +41,6 @@ const DealCards = (gameState: GameState) => {
 
   const players:PlayerState[] = gameState.players.map(player => {
     const folded = player.status === 'folded';
-    player.currentBet = 0;
-    player.hand = [];
     return {
       ...player,
       status: folded ? 'active' : player.status,
@@ -114,65 +112,48 @@ const DealCards = (gameState: GameState) => {
 
 
 const raiseHandler = (game: GameState, betInput: number):GameState => {
-  const players = [...game.players];
+  const players = copyPlayers(game.players);
   if (betInput > players[game.currentPlayerIndex].chips) {
-    // TODO these will eventually send a error to FE
-    console.error('not enough chips!');
-    const error = 'not enough chips!';
-    return {
-      ...game,
-      error,
-    }
+    return { ...game, error: 'not enough chips!' };
   }
   if (betInput < game.bigBlind) {
-    console.error('not big enough bet!');
-    const error = 'not big enough bet!';
-    return {
-      ...game,
-      error,
-    }
+    return { ...game, error: 'not big enough bet!' };
   }
 
   const lastRaisePlayerIndex = game.currentPlayerIndex;
   const currentBet:number = game.currentBet + betInput;
   const raiseDelta = currentBet - players[game.currentPlayerIndex].currentBet;
-  players[game.currentPlayerIndex].chips = (players[game.currentPlayerIndex].chips - raiseDelta);
-  players[game.currentPlayerIndex].currentBet = (currentBet);
+  players[game.currentPlayerIndex].chips -= raiseDelta;
+  players[game.currentPlayerIndex].currentBet = currentBet;
   const pot = game.pot + raiseDelta;
-  // need to have this return gamestate if changed
-  const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game); // checkNextPlayer needs to not return full game
-  let newGame: GameState;
+  const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game);
   if (lastPlayer) {
-    newGame = updateRoundState({ ...game, pot, players, currentPlayerIndex });
-    return newGame;
+    return updateRoundState({ ...game, pot, players, currentPlayerIndex });
   }
   return {
     ...game,
     players,
     currentBet,
     pot,
+    currentPlayerIndex,
     lastRaisePlayerIndex,
   }
 }
 
-const callHandler = (game: GameState) => {
-  const players = [...game.players];
-  let call = game.currentBet - game.players[game.currentPlayerIndex].currentBet;
-  if (call > players[game.currentPlayerIndex].chips) {
-    call = game.players[game.currentPlayerIndex].chips;
-  }
-  const pot = game.pot + call;
-  players[game.currentPlayerIndex].currentBet = game.players[game.currentPlayerIndex].currentBet + call;
-  players[game.currentPlayerIndex].chips = game.players[game.currentPlayerIndex].chips - call;
+const callHandler = (game: GameState): GameState => {
+  const players = copyPlayers(game.players);
+  const callAmount = Math.min(
+    game.currentBet - players[game.currentPlayerIndex].currentBet,
+    players[game.currentPlayerIndex].chips,
+  );
+  const pot = game.pot + callAmount;
+  players[game.currentPlayerIndex].currentBet += callAmount;
+  players[game.currentPlayerIndex].chips -= callAmount;
 
-  const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game); // checkNextPlayer needs to not return full game
-  let newGame: GameState;
+  const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game);
   if (lastPlayer) {
-    newGame = updateRoundState({ ...game, pot, players, currentPlayerIndex });
-    return newGame;
+    return updateRoundState({ ...game, pot, players, currentPlayerIndex });
   }
-  // likely need to move updateRoundState out of checkNextPlayer.
-  // probably just put in all the handlers, it's okay to go against DRY a little bit for simpler functions
   return {
     ...game,
     players,
@@ -181,12 +162,10 @@ const callHandler = (game: GameState) => {
   }
 }
 
-  const checkHandler = (game: GameState) => {
-    const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game); // checkNextPlayer needs to not return full game
-    let newGame: GameState;
+  const checkHandler = (game: GameState): GameState => {
+    const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game);
     if (lastPlayer) {
-      newGame = updateRoundState({ ...game, currentPlayerIndex });
-      return newGame;
+      return updateRoundState({ ...game, currentPlayerIndex });
     }
     return {
       ...game,
@@ -194,28 +173,25 @@ const callHandler = (game: GameState) => {
     }
   }
 
-  const foldHandler = (game: GameState) => {
-    const players = [...game.players];
+  const foldHandler = (game: GameState): GameState => {
+    const players = copyPlayers(game.players);
     players[game.currentPlayerIndex].status = 'folded';
     const nonFoldedPlayers = players.filter(player => player.status !== 'folded');
     if (nonFoldedPlayers.length === 1) {
-      const newGame = declareWinner(nonFoldedPlayers, game);
-      return newGame;
+      return declareWinner(nonFoldedPlayers, { ...game, players });
     }
     const index = game.currentPlayerIndex;
-    const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game); // checkNextPlayer needs to not return full game
-    let newGame: GameState;
+    const updatedGame = { ...game, players };
+    const { currentPlayerIndex, lastPlayer } = checkNextPlayer(updatedGame);
     if (lastPlayer) {
-      newGame = updateRoundState({ ...game, currentPlayerIndex });
-      return newGame;
+      return updateRoundState({ ...updatedGame, currentPlayerIndex });
     }
     if (index === game.lastRaisePlayerIndex) {
-      const lastRaisePlayerIndex = game.currentPlayerIndex;
       return {
         ...game,
         players,
         currentPlayerIndex,
-        lastRaisePlayerIndex,
+        lastRaisePlayerIndex: game.currentPlayerIndex,
       }
     }
 
@@ -227,10 +203,9 @@ const callHandler = (game: GameState) => {
   }
 
   const allInHandler = (game: GameState): GameState => {
-    const players = [...game.players];
+    const players = copyPlayers(game.players);
     let currentBet = game.currentBet;
     let lastRaisePlayerIndex = game.lastRaisePlayerIndex;
-    let pot = game.pot;
     const allInAmount = players[game.currentPlayerIndex].chips + players[game.currentPlayerIndex].currentBet;
     if (allInAmount > currentBet) {
       currentBet = allInAmount;
@@ -238,20 +213,18 @@ const callHandler = (game: GameState) => {
     }
     players[game.currentPlayerIndex].currentBet = allInAmount;
     players[game.currentPlayerIndex].chips = 0;
+    const pot = game.pot + allInAmount;
 
-    pot += allInAmount;
-
-    const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game); // checkNextPlayer needs to not return full game
-    let newGame: GameState;
+    const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game);
     if (lastPlayer) {
-      newGame = updateRoundState({ ...game, currentPlayerIndex });
-      return newGame;
+      return updateRoundState({ ...game, players, currentPlayerIndex });
     }
     return {
       ...game,
       players,
       currentBet,
       pot,
+      currentPlayerIndex,
       lastRaisePlayerIndex,
     }
   }
@@ -373,22 +346,21 @@ const declareWinner = (winners: nestedPlayers, game: GameState): GameState => {
     return maxWinning;
   }
 
-  const players = [...game.players];
+  const players = copyPlayers(game.players);
   let pot = game.pot;
 
   winners.forEach(winnerGroup => {
     if (Array.isArray(winnerGroup)) {
-      winnerGroup.map(player => {
-        const maxWinning = getMaxWinning(player);
+      winnerGroup.forEach(winner => {
+        const maxWinning = getMaxWinning(winner);
         const wonChips = Math.round(maxWinning / winnerGroup.length) >= pot ? Math.round(maxWinning / winnerGroup.length) : Math.round(pot / winnerGroup.length);
-        player.chips = player.chips + wonChips;
+        players.find(p => p.id === winner.id)!.chips += wonChips;
         pot -= wonChips;
       });
     } else {
-      // give what they can get from this
       const maxWinning = getMaxWinning(winnerGroup);
       const wonChips = maxWinning <= pot ? Math.round(maxWinning) : pot;
-      winnerGroup.chips = winnerGroup.chips + wonChips;
+      players.find(p => p.id === winnerGroup.id)!.chips += wonChips;
       pot -= wonChips;
     }
   })

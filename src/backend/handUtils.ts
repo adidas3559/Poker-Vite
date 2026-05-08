@@ -37,31 +37,15 @@ const straight = (allCards: CardState[]) => {
       straightCount++;
       cardList = [...cardList, getValue(card.number)];
     } else {
+      if (cardList.length >= 5) {
+      return cardList;
+    }
       straightCount = 1;
       cardList = [getValue(card.number)];
     }
     lastValue = getValue(card.number);
   });
   return cardList;
-}
-
-const straight2 = (allCards: CardState[]) => {
-  // By adding underscore to key (_key), we get typescript to ignore that key isn't being used
-  // eslint-disable-next-line
-  let straightCount = 0;
-  let lastValue = 0;
-  let straightCards: number[] = [];
-  allCards.forEach(card => {
-    if (lastValue - 1 === getValue(card.number)) {
-      straightCount++;
-      straightCards = [...straightCards, getValue(card.number)]
-    } else {
-      straightCount = 1;
-      straightCards = [getValue(card.number)];
-    }
-    lastValue = getValue(card.number);
-  });
-  return straightCards;
 }
 
 const flush = (cardsBySuit: Map<string, CardCompare>) => {
@@ -78,7 +62,6 @@ export {
   threeOfAKind, 
   fourOfAKind,
   straight,
-  straight2,
   flush,
 }
 

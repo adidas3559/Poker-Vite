@@ -180,7 +180,6 @@ const getValue = (cardValue: string):number => {
 }
 
 const contestHands = (highestPlayers: HandRanking[]) => {
-  console.log('🚀 ~ contestHands ~ highestPlayers:', highestPlayers);
   const highestPlayersMap = new Map();
   highestPlayers.forEach(player => {
     const hand = player.highestHand;
@@ -239,14 +238,15 @@ function combineDuplicateHands(players: HandRanking[]): nestedHandRanking {
     return players;
   }
   for (let i = 0; i < players.length; i++) {
-    if (i === 0) {
+    const currentPlayer = players[i];
+    if (i === players.length - 1) {
+      playersCombined.push(currentPlayer);
       continue;
     }
     
-    const currentPlayer = players[i];
-    const prevPlayer = players[i - 1];
+    const prevPlayer = players[i + 1];
     if (arraysEqual(currentPlayer.relevantCardValues, prevPlayer.relevantCardValues)) {
-      // check if prevPlayer is alread in group
+      // check if prevPlayer is already in group
       if (Array.isArray(playersCombined[playersCombined.length - 1])) {
         playersCombined[playersCombined.length - 1] = [...playersCombined[playersCombined.length - 1] as HandRanking[], currentPlayer];
         // playersCombined.push([prevPlayer, currentPlayer]);
@@ -262,6 +262,9 @@ function combineDuplicateHands(players: HandRanking[]): nestedHandRanking {
 }
 
 
+const copyPlayers = (players: PlayerState[]): PlayerState[] =>
+  players.map(player => ({ ...player, hand: [...player.hand] }));
+
 export {
   getNextActiveIndex,
   createDeck,
@@ -272,4 +275,5 @@ export {
   getHandRanking,
   getValue,
   contestHands,
+  copyPlayers,
 }
