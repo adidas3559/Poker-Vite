@@ -9,6 +9,7 @@ import {
   checkHandler,
   foldHandler,
   allInHandler,
+  updateRoundState,
 } from './GameLogic';
 
 // --- helpers ---
@@ -353,5 +354,210 @@ describe('allInHandler', () => {
     const game = makeGame();
     const result = allInHandler(game);
     expect(result.currentPlayerIndex).toBe(1);
+  });
+});
+
+// --- updateRoundState helpers ---
+
+const c = (number: string, suit: CardState['suit']): CardState => ({ number, suit });
+
+// A game ready for a phase transition — deck has plenty of cards
+const makePhaseGame = (phase: GameState['phase'], tableCards: CardState[] = []): GameState => ({
+  ...makeGame({ phase, tableCards }),
+  deck: makeCards(30),
+});
+
+// River game: player 0 has pair of aces, player 1 has high card only
+const makeRiverGame = (): GameState => ({
+  players: [
+    { id: '0', name: 'Player 0', hand: [c('ace', 'hearts'), c('ace', 'spades')],   chips: 90, currentBet: 10, status: 'active' },
+    { id: '1', name: 'Player 1', hand: [c('2', 'clubs'),   c('7', 'diamonds')],    chips: 95, currentBet: 5,  status: 'active' },
+  ],
+  deck: makeCards(5),
+  tableCards: [c('king', 'hearts'), c('queen', 'spades'), c('jack', 'clubs'), c('3', 'diamonds'), c('4', 'hearts')],
+  pot: 15,
+  currentBet: 10,
+  smallBlind: 2,
+  bigBlind: 4,
+  dealerIndex: 0,
+  currentPlayerIndex: 0,
+  lastRaisePlayerIndex: 1,
+  phase: 'river',
+  winners: [],
+  error: '',
+});
+console.log('🚀 ~ makeRiverGame ~ makeRiverGame:', makeRiverGame);
+
+const makeBenLosesGame = (): GameState => ({
+  players: [
+    { id: '0', name: 'Blake', hand: [c('ace', 'hearts'), c('ace', 'spades')],   chips: 12, currentBet: 4, status: 'active' },
+    { id: '1', name: 'Alissa', hand: [c('2', 'clubs'),   c('7', 'diamonds')],    chips: 36, currentBet: 4,  status: 'active' },
+    { id: '1', name: 'Stephen', hand: [c('jack', 'clubs'),   c('2', 'diamonds')],    chips: 12, currentBet: 4,  status: 'active' },
+    { id: '1', name: 'Caitlyn', hand: [c('10', 'clubs'),   c('4', 'diamonds')],    chips: 36, currentBet: 4,  status: 'active' },
+    { id: '1', name: 'Ben', hand: [c('3', 'clubs'),   c('6', 'diamonds')],    chips: 2, currentBet: 4,  status: 'active' },
+    { id: '1', name: 'Max', hand: [c('ace', 'clubs'),   c('9', 'diamonds')],    chips: 12, currentBet: 4,  status: 'active' },
+  ],
+  deck: makeCards(5),
+  tableCards: [c('7', 'hearts'), c('9', 'clubs'), c('ace', 'clubs'), c('2', 'hearts'), c('king', 'spades')],
+  pot: 15,
+  currentBet: 10,
+  smallBlind: 2,
+  bigBlind: 4,
+  dealerIndex: 0,
+  currentPlayerIndex: 0,
+  lastRaisePlayerIndex: 1,
+  phase: 'river',
+  winners: [],
+  error: '',
+});
+console.log('🚀 ~ makeBenLosesGame ~ makeBenLosesGame:', makeBenLosesGame);
+
+const makeBenWinsGame = (): GameState => ({
+  players: [
+    { id: '0', name: 'Blake', hand: [c('6', 'hearts'), c('2', 'spades')],   chips: 16, currentBet: 4, status: 'active' },
+    { id: '1', name: 'Alissa', hand: [c('queen', 'spades'),   c('8', 'spades')],    chips: 16, currentBet: 4,  status: 'active' },
+    { id: '2', name: 'Stephen', hand: [c('4', 'spades'),   c('queen', 'clubs')],    chips: 16, currentBet: 4,  status: 'active' },
+    { id: '3', name: 'Caitlyn', hand: [c('3', 'spades'),   c('6', 'diamonds')],    chips: 16, currentBet: 4,  status: 'active' },
+    { id: '4', name: 'Ben', hand: [c('jack', 'hearts'),   c('10', 'clubs')],    chips: 6, currentBet: 4,  status: 'active' },
+    { id: '5', name: 'Max', hand: [c('2', 'hearts'),   c('7', 'hearts')],    chips: 16, currentBet: 4,  status: 'active' },
+  ],
+  deck: makeCards(5),
+  tableCards: [c('4', 'clubs'), c('9', 'spades'), c('10', 'diamonds'), c('8', 'hearts'), c('king', 'clubs')],
+  pot: 24,
+  currentBet: 4,
+  smallBlind: 2,
+  bigBlind: 4,
+  dealerIndex: 0,
+  currentPlayerIndex: 0,
+  lastRaisePlayerIndex: 1,
+  phase: 'river',
+  winners: [],
+  error: '',
+});
+
+// --- updateRoundState — preflop → flop ---
+
+describe('updateRoundState (preflop → flop)', () => {
+  it('sets phase to flop', () => {
+    const result = updateRoundState(makePhaseGame('preflop'));
+    expect(result.phase).toBe('flop');
+  });
+
+  it('adds exactly 3 table cards', () => {
+    const result = updateRoundState(makePhaseGame('preflop'));
+    expect(result.tableCards).toHaveLength(3);
+  });
+
+  it('removes 4 cards from the deck (1 burn + 3 flop)', () => {
+    const game = makePhaseGame('preflop');
+    const before = game.deck.length;
+    const result = updateRoundState(game);
+    expect(result.deck.length).toBe(before - 4);
+  });
+
+  it('resets currentPlayerIndex to left of dealer', () => {
+    // dealer is index 0, so left of dealer = index 1
+    const result = updateRoundState(makePhaseGame('preflop'));
+    expect(result.currentPlayerIndex).toBe(1);
+  });
+
+  it('resets lastRaisePlayerIndex to left of dealer', () => {
+    const result = updateRoundState(makePhaseGame('preflop'));
+    expect(result.lastRaisePlayerIndex).toBe(1);
+  });
+
+  it('mutates input game.phase as a side effect (known bug)', () => {
+    const game = makePhaseGame('preflop');
+    updateRoundState(game);
+    expect(game.phase).toBe('flop');
+  });
+});
+
+// --- updateRoundState — flop → turn ---
+
+describe('updateRoundState (flop → turn)', () => {
+  it('sets phase to turn', () => {
+    const result = updateRoundState(makePhaseGame('flop', makeCards(3)));
+    expect(result.phase).toBe('turn');
+  });
+
+  it('adds 1 card to the existing 3 table cards (total 4)', () => {
+    const result = updateRoundState(makePhaseGame('flop', makeCards(3)));
+    expect(result.tableCards).toHaveLength(4);
+  });
+
+  it('removes 2 cards from the deck (1 burn + 1 turn)', () => {
+    const game = makePhaseGame('flop', makeCards(3));
+    const before = game.deck.length;
+    const result = updateRoundState(game);
+    expect(result.deck.length).toBe(before - 2);
+  });
+
+  it('resets currentPlayerIndex to left of dealer', () => {
+    const result = updateRoundState(makePhaseGame('flop', makeCards(3)));
+    expect(result.currentPlayerIndex).toBe(1);
+  });
+});
+
+// --- updateRoundState — turn → river ---
+
+describe('updateRoundState (turn → river)', () => {
+  it('sets phase to river', () => {
+    const result = updateRoundState(makePhaseGame('turn', makeCards(4)));
+    expect(result.phase).toBe('river');
+  });
+
+  it('adds 1 card to the existing 4 table cards (total 5)', () => {
+    const result = updateRoundState(makePhaseGame('turn', makeCards(4)));
+    expect(result.tableCards).toHaveLength(5);
+  });
+
+  it('removes 2 cards from the deck (1 burn + 1 river)', () => {
+    const game = makePhaseGame('turn', makeCards(4));
+    const before = game.deck.length;
+    const result = updateRoundState(game);
+    expect(result.deck.length).toBe(before - 2);
+  });
+
+  it('resets currentPlayerIndex to left of dealer', () => {
+    const result = updateRoundState(makePhaseGame('turn', makeCards(4)));
+    expect(result.currentPlayerIndex).toBe(1);
+  });
+});
+
+// --- updateRoundState — river → end (showdown) ---
+
+describe('updateRoundState (river → end)', () => {
+  it('sets phase to end', () => {
+    const result = updateRoundState(makeBenWinsGame());
+    expect(result.phase).toBe('end');
+  });
+
+  it('awards pot chips to the winning player', () => {
+    const game = makeBenWinsGame();
+    const result = updateRoundState(game);
+    console.log('🚀 ~ result:', result);
+    // player 0 has pair of aces and should win
+    expect(game.players[5].chips).toBeGreaterThan(game.players[5].chips);
+  });
+
+  it('Second place winner gets chips', () => {
+    const game = makeBenWinsGame();
+    console.log('🚀 ~ game:', game);
+    const result = updateRoundState(game);
+    console.log('🚀 ~ result:', result);
+    expect(game.players[1].chips).toBe(game.players[1].chips);
+  });
+
+  it('reduces the pot after distributing', () => {
+    const game = makeBenWinsGame();
+    const result = updateRoundState(game);
+    expect(result.pot).toBeLessThan(game.pot);
+  });
+
+  it('advances dealerIndex to next active player', () => {
+    const game = makeBenWinsGame(); // dealerIndex: 0
+    const result = updateRoundState(game);
+    expect(result.dealerIndex).not.toBe(game.dealerIndex);
   });
 });

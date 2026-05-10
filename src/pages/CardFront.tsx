@@ -6,6 +6,7 @@ interface props {
 }
 
 const CardFront = (props: props) => {
+  // console.log('🚀 ~ CardFront ~ props:', props);
 
   const renderCard = () => {
     // let cardType: Suit;

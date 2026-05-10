@@ -199,9 +199,11 @@ const contestHands = (highestPlayers: HandRanking[]) => {
     
     playersOrder.push(...handPlayers)
   }
+  console.log('🚀 ~ contestHands ~ playersOrder:', playersOrder);
 
   // check for identicals
   const combinedPlayersHands = combineDuplicateHands(playersOrder);
+  console.log('🚀 ~ contestHands ~ combinedPlayersHands:', combinedPlayersHands);
   
   const combinedPlayers = combinedPlayersHands.map(item => {
     if (Array.isArray(item)) {
@@ -240,7 +242,10 @@ function combineDuplicateHands(players: HandRanking[]): nestedHandRanking {
   for (let i = 0; i < players.length; i++) {
     const currentPlayer = players[i];
     if (i === players.length - 1) {
-      playersCombined.push(currentPlayer);
+      const arrayHasLastPlayer = playersCombined.flat().some(player => player.player.id === players[i].player.id);
+      if (!arrayHasLastPlayer) {
+        playersCombined.push(currentPlayer);
+      }
       continue;
     }
     

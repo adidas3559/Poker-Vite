@@ -4,7 +4,7 @@ import CardFront from './CardFront';
 import table1 from '../assets/table1.png';
 import {
   initGame,
-  startNewRound,
+  testStartNewRound,
   raiseHandler,
   callHandler,
   checkHandler,
@@ -20,7 +20,7 @@ const TestGameView = () => {
   const { players, tableCards, pot, currentBet, currentPlayerIndex, dealerIndex, phase } = game;
 
   const drawHandler = () => {
-    const newGame = startNewRound(game);
+    const newGame = testStartNewRound(game);
     setGame(newGame);
     setRaiseInput(newGame.bigBlind);
   };

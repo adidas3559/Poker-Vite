@@ -5,26 +5,26 @@ import CardFront from './CardFront';
 import table1 from '../assets/table1.png';
 import {
   initGame,
-  startNewRound,
+  testStartNewRound,
   raiseHandler,
   callHandler,
   checkHandler,
   foldHandler,
   allInHandler,
 } from '../controllers/gameService';
-import type { GameState } from '../types/GameState';
+import type { GameState, PlayerState } from '../types/GameState';
 
 const MobileTestGameView = () => {
   const [game, setGame] = useState<GameState>(initGame());
+  console.log('🚀 ~ MobileTestGameView ~ game:', game);
   const [raiseInput, setRaiseInput] = useState<number>(0);
   const [expandedSeat, setExpandedSeat] = useState<number | null>(0);
   const [expandedTableCards, setExpandedTableCards] = useState(false);
-  // console.log('🚀 ~ MobileTestGameView ~ game:', game);
 
   const { players, tableCards, pot, currentBet, currentPlayerIndex, dealerIndex, phase } = game;
 
   const drawHandler = () => {
-    const newGame = startNewRound(game);
+    const newGame = testStartNewRound(game);
     setGame(newGame);
     setRaiseInput(newGame.bigBlind);
   };
@@ -37,7 +37,9 @@ const MobileTestGameView = () => {
   };
 
   const handleAllIn = () => setGame(allInHandler(game));
-  const handleCheck = () => setGame(checkHandler(game));
+  const handleCheck = () => {
+    return setGame(checkHandler(game));
+  };
   const handleCall  = () => setGame(callHandler(game));
   const handleFold  = () => setGame(foldHandler(game));
 
@@ -45,18 +47,33 @@ const MobileTestGameView = () => {
     setExpandedSeat(prev => prev === index ? null : index);
   };
 
-  const getBlindIndex = (startIndex: number) => {
+  const getNextActivePlayer = (startIndex: number) => {
     let index = startIndex;
     do {
+      console.log('🚀 ~ getNextActivePlayer ~ index:', index);
       index = (index + 1) % players.length;
+      console.log('🚀 ~ getNextActivePlayer ~ index:', index);
+      console.log('player[index]', players[index]);
     } while (players[index].status === 'busted' || players[index].status === 'folded');
     return index;
   };
+
+  const howManyActivePlayers = (players: PlayerState[]) => {
+    const activePlayerCount = players.reduce((count, player) => {
+      if (player.status === 'busted') {
+        return count;
+      }
+      return count + 1;
+    }, 0);
+    
+    return activePlayerCount;
+  }
 
   const inActivePhase =
     phase === 'preflop' || phase === 'flop' || phase === 'turn' || phase === 'river';
 
   const currentPlayer = players[currentPlayerIndex];
+  console.log('🚀 ~ MobileTestGameView ~ currentPlayer:', currentPlayer);
 
   return (
     <div className="mobile-wrapper">
@@ -69,7 +86,10 @@ const MobileTestGameView = () => {
           onClick={() => tableCards.length > 0 && setExpandedTableCards(p => !p)}
         >
           <div className="mobile-community-cards">
-            {tableCards.map((card, i) => <CardFront key={i} card={card} />)}
+            {tableCards.map((card, i) => {
+              console.log('🚀 ~ MobileTestGameView ~ card:', card);
+              return <CardFront key={i} card={card} />;
+            })}
           </div>
           <div className="mobile-pot-info">
             <span className='pot'>Pot: {pot.toLocaleString()}</span>
@@ -107,10 +127,13 @@ const MobileTestGameView = () => {
                 )}
               </div>
 
+              
 
               {index === dealerIndex && <span className="pin dealer">D</span>}
-              {index === getBlindIndex(dealerIndex) && <span className="pin smallBlind">SB</span>}
-              {index === getBlindIndex(dealerIndex + 1) && <span className="pin bigBlind">BB</span>}
+              {howManyActivePlayers(players) === 2 && index === dealerIndex && <span className="pin smallBlind">SB</span>}
+              {howManyActivePlayers(players) === 2 && index === getNextActivePlayer(dealerIndex) && <span className="pin bigBlind">BB</span>}
+              {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(dealerIndex) && <span className="pin smallBlind">SB</span>}
+              {howManyActivePlayers(players) > 2 && index ===getNextActivePlayer(getNextActivePlayer(dealerIndex)) && <span className="pin bigBlind">BB</span>}
             </div>
           );
         })}

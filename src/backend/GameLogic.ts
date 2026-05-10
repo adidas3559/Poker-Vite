@@ -33,6 +33,7 @@ const createGame = (players: PlayerState[]): GameState => {
 }
 
 const DealCards = (game: GameState) => {
+  console.log('deal cards');
   const deck = createDeck();
   shuffleDeck(deck);
   
@@ -71,10 +72,10 @@ const DealCards = (game: GameState) => {
   if (howManyActivePlayers(players) === 2) {
     const currentPlayerIndex = dealerIndex; // first to act is dealer/small blind preflop
     const lastRaisePlayerIndex = dealerIndex;
-    players[dealerIndex].currentBet = game.smallBlind; // Dealer is small blind
-    players[dealerIndex].chips = players[dealerIndex].chips - game.smallBlind;
-    players[getNextActiveIndex(players, dealerIndex)].currentBet = game.bigBlind; // Other player is big blind
-    players[getNextActiveIndex(players, dealerIndex)].chips = (players[getNextActiveIndex(players, dealerIndex)].chips - game.bigBlind);
+    players[dealerIndex].currentBet = setBlind(players[dealerIndex], game.smallBlind); // Dealer is small blind
+    players[dealerIndex].chips = players[dealerIndex].chips - setBlind(players[dealerIndex], game.smallBlind);
+    players[getNextActiveIndex(players, dealerIndex)].currentBet = setBlind(players[getNextActiveIndex(players, dealerIndex)], game.bigBlind); // Other player is big blind
+    players[getNextActiveIndex(players, dealerIndex)].chips = (players[getNextActiveIndex(players, dealerIndex)].chips - setBlind(players[getNextActiveIndex(players, dealerIndex)], game.bigBlind));
 
     return {
       ...game,
@@ -94,10 +95,10 @@ const DealCards = (game: GameState) => {
 
   const currentPlayerIndex = getNextActiveIndex(players, dealerIndex + 2);
   const lastRaisePlayerIndex = getNextActiveIndex(players, dealerIndex + 2);
-  players[getNextActiveIndex(players, dealerIndex)].currentBet = game.smallBlind;
-  players[getNextActiveIndex(players, dealerIndex)].chips = players[getNextActiveIndex(players, dealerIndex)].chips - game.smallBlind;
-  players[getNextActiveIndex(players, dealerIndex + 1)].currentBet = game.bigBlind;
-  players[getNextActiveIndex(players, dealerIndex + 1)].chips = players[getNextActiveIndex(players, dealerIndex + 1)].chips - game.bigBlind;
+  players[getNextActiveIndex(players, dealerIndex)].currentBet = setBlind(players[getNextActiveIndex(players, dealerIndex)], game.smallBlind);
+  players[getNextActiveIndex(players, dealerIndex)].chips = players[getNextActiveIndex(players, dealerIndex)].chips - setBlind(players[getNextActiveIndex(players, dealerIndex)], game.smallBlind);
+  players[getNextActiveIndex(players, dealerIndex + 1)].currentBet = setBlind(players[getNextActiveIndex(players, dealerIndex + 1)], game.bigBlind);
+  players[getNextActiveIndex(players, dealerIndex + 1)].chips = players[getNextActiveIndex(players, dealerIndex + 1)].chips - setBlind(players[getNextActiveIndex(players, dealerIndex + 1)], game.bigBlind);
 
   return {
     ...game,
@@ -110,6 +111,11 @@ const DealCards = (game: GameState) => {
     lastRaisePlayerIndex,
     tableCards,
   }
+}
+
+
+const setBlind = (player: PlayerState, blind: number): number => {
+  return blind > player.chips ? player.chips : blind
 }
 
 
@@ -213,13 +219,20 @@ const callHandler = (game: GameState): GameState => {
       currentBet = allInAmount;
       lastRaisePlayerIndex = game.currentPlayerIndex;
     }
+    const pot = game.pot + players[game.currentPlayerIndex].chips;
     players[game.currentPlayerIndex].currentBet = allInAmount;
     players[game.currentPlayerIndex].chips = 0;
-    const pot = game.pot + allInAmount;
 
     const { currentPlayerIndex, lastPlayer } = checkNextPlayer(game);
     if (lastPlayer) {
-      return updateRoundState({ ...game, players, currentPlayerIndex });
+      return updateRoundState({
+        ...game,
+        players,
+        currentBet,
+        pot,
+        currentPlayerIndex,
+        lastRaisePlayerIndex,
+      });
     }
     return {
       ...game,
@@ -238,6 +251,7 @@ const callHandler = (game: GameState): GameState => {
 
 const checkNextPlayer = (game: GameState) => {
   const nextPlayerIndex = getNextActiveIndex(game.players, game.currentPlayerIndex);
+  console.log('🚀 ~ checkNextPlayer ~ nextPlayerIndex:', nextPlayerIndex);
   if (nextPlayerIndex === game.lastRaisePlayerIndex) {
     return { currentPlayerIndex: game.currentPlayerIndex, lastPlayer: true }
   } else {
@@ -248,65 +262,78 @@ const checkNextPlayer = (game: GameState) => {
 
 const nextPlayersTurn = (game: GameState) => {
   let currentPlayerIndex = game.currentPlayerIndex;
+  console.log('🚀 ~ nextPlayersTurn ~ currentPlayerIndex:', currentPlayerIndex);
   do {
-    if (game.currentPlayerIndex >= game.players.length - 1) {
+    console.log('NextPlayersturn while')
+    if (currentPlayerIndex >= game.players.length - 1) {
+      console.log('inside if', currentPlayerIndex);
+      console.log('game.players - 1', game.players.length);
       currentPlayerIndex = 0;
     } else {
+      console.log('inside else', currentPlayerIndex);
       currentPlayerIndex++;
     }
   } while ((game.players[currentPlayerIndex] ?? game.players[0]).status === 'folded' || (game.players[currentPlayerIndex] ?? game.players[0]).status === 'busted')
+  console.log('🚀 ~ nextPlayersTurn ~ currentPlayerIndex:', currentPlayerIndex);
   return currentPlayerIndex;
 }
 
 
 const updateRoundState = (game: GameState): GameState => {
+  console.log('🚀 ~ updateRoundState ~ game:', game);
   const deck = game.deck;
+  console.log('🚀 ~ updateRoundState ~ deck:', deck);
   if (game.phase === 'preflop') {
-    game.phase = 'flop';
+    const phase = 'flop';
     drawCard(deck); // burn card
     const flopCard1: CardState = drawCard(deck);
+    console.log('🚀 ~ updateRoundState ~ flopCard1:', flopCard1);
     const flopCard2: CardState = drawCard(deck);
+    console.log('🚀 ~ updateRoundState ~ flopCard2:', flopCard2);
     const flopCard3: CardState = drawCard(deck);
+    console.log('🚀 ~ updateRoundState ~ flopCard3:', flopCard3);
     const tableCards: CardState[] = [flopCard1, flopCard2, flopCard3];
+    console.log('🚀 ~ updateRoundState ~ tableCards:', tableCards);
     const {currentPlayerIndex, lastRaisePlayerIndex} = getLeftOfDealer(game);
     return {
       ...game,
+      phase,
       deck,
       currentPlayerIndex,
       lastRaisePlayerIndex,
       tableCards,
     };
   } else if (game.phase === 'flop') {
-    game.phase = 'turn';
+    const phase = 'turn';
     drawCard(deck); // burn card
     const turnCard = drawCard(deck);
     const tableCards: CardState[] = [...game.tableCards, turnCard];
     const {currentPlayerIndex, lastRaisePlayerIndex} = getLeftOfDealer(game);
     return {
       ...game,
+      phase,
       deck,
       currentPlayerIndex,
       lastRaisePlayerIndex,
       tableCards,
     };
   } else if (game.phase === 'turn') {
-    game.phase = 'river';
+    const phase = 'river';
     drawCard(deck); // burn card
     const riverCard = drawCard(deck);
     const tableCards: CardState[] = [...game.tableCards, riverCard];
     const {currentPlayerIndex, lastRaisePlayerIndex} = getLeftOfDealer(game);
     return {
       ...game,
+      phase,
       deck,
       currentPlayerIndex,
       lastRaisePlayerIndex,
       tableCards,
     };
   } else {
-    console.log('🚀 ~ updateRoundState ~ game:', game);
     const nonFoldedPlayers = game.players.filter(player => player.status !== 'folded');
     const finalHands = nonFoldedPlayers.map(player => ({ ...getHandRanking(player, game.tableCards)}));
-    console.log('🚀 ~ updateRoundState ~ finalHands:', finalHands);
     const handOrder = ['highCard', 'pair', 'twoPair', 'threeOfAKind', 'straight', 'flush', 'fullHouse', 'fourOfAKind', 'straightFlush', 'royalFlush'];
     finalHands.sort((a, b) => {
       const handA = handOrder.indexOf(a.highestHand);
@@ -314,22 +341,15 @@ const updateRoundState = (game: GameState): GameState => {
 
       return handB - handA;
     });
-    console.log('🚀 ~ updateRoundState ~ finalHands:', finalHands);
     // const highestPlayers = finalHands.filter(hand => hand.highestHand === highestHand);
     const winners = contestHands(finalHands);
-    console.log('🚀 ~ updateRoundState ~ winners:', winners);
     const newGame = declareWinner(winners, game);
-    console.log('🚀 ~ updateRoundState ~ newGame:', newGame);
     return newGame;
   }
 }
 
 type nestedPlayers = (PlayerState | PlayerState[])[];
 const declareWinner = (winners: nestedPlayers, game: GameState): GameState => {
-  console.log('🚀 ~ Game ~ winners:', winners);
-
-  
-
   if (winners.length === 0) {
     console.error('Got 0 winners')
     return {
@@ -360,7 +380,7 @@ const declareWinner = (winners: nestedPlayers, game: GameState): GameState => {
     if (Array.isArray(winnerGroup)) {
       winnerGroup.forEach(winner => {
         const maxWinning = getMaxWinning(winner);
-        const wonChips = Math.round(maxWinning / winnerGroup.length) >= pot ? Math.round(maxWinning / winnerGroup.length) : Math.round(pot / winnerGroup.length);
+        const wonChips = Math.round(maxWinning / winnerGroup.length) <= pot ? Math.round(maxWinning / winnerGroup.length) : Math.round(pot / winnerGroup.length);
         players.find(p => p.id === winner.id)!.chips += wonChips;
         pot -= wonChips;
       });
@@ -375,12 +395,13 @@ const declareWinner = (winners: nestedPlayers, game: GameState): GameState => {
 
   const phase = 'end';
   // Prepping for next round
-  const dealerIndex = getNextActiveIndex(players, game.dealerIndex);
   players.forEach(player => {
     if (player.chips <= 0) {
       player.status = 'busted';
     }
   })
+
+  const dealerIndex = getNextActiveIndex(players, game.dealerIndex);
 
   return {
     ...game,
@@ -397,13 +418,67 @@ const declareWinner = (winners: nestedPlayers, game: GameState): GameState => {
 
 
 
+type TestDealConfig = {
+  playerHands: [CardState, CardState][];
+  deck: CardState[];
+}
+
+const testDealCards = (game: GameState, config: TestDealConfig): GameState => {
+  console.log('🚀 ~ testDealCards ~ config:', config);
+  console.log('test deal cards');
+  const deck = [...config.deck];
+  console.log('🚀 ~ testDealCards ~ deck:', deck);
+  const tableCards: CardState[] = [];
+
+  const players: PlayerState[] = game.players.map((player, i) => ({
+    ...player,
+    status: player.status === 'folded' ? 'active' : player.status,
+    currentBet: 0,
+    hand: player.status === 'busted' ? [] : [...config.playerHands[i]],
+  }));
+
+  const dealerIndex = game.dealerIndex;
+  const currentBet = game.bigBlind;
+  const phase: GamePhase = 'preflop';
+
+  if (howManyActivePlayers(players) === 2) {
+    const currentPlayerIndex = dealerIndex;
+    const lastRaisePlayerIndex = dealerIndex;
+    const smallBlindIndex = dealerIndex;
+    const bigBlindIndex = getNextActiveIndex(players, dealerIndex);
+    const pot = setBlind(players[smallBlindIndex], game.smallBlind) + setBlind(players[bigBlindIndex], game.bigBlind);
+
+    players[smallBlindIndex].currentBet = setBlind(players[smallBlindIndex], game.smallBlind);
+    players[smallBlindIndex].chips -= setBlind(players[smallBlindIndex], game.smallBlind);
+    players[bigBlindIndex].currentBet = setBlind(players[bigBlindIndex], game.bigBlind);
+    players[bigBlindIndex].chips -= setBlind(players[bigBlindIndex], game.bigBlind);
+
+    return { ...game, deck, players, currentBet, pot, phase, currentPlayerIndex, lastRaisePlayerIndex, tableCards };
+  }
+
+  const currentPlayerIndex = getNextActiveIndex(players, getNextActiveIndex(players, getNextActiveIndex(players, dealerIndex)));
+  const lastRaisePlayerIndex = getNextActiveIndex(players, getNextActiveIndex(players, getNextActiveIndex(players, dealerIndex)));
+  const smallBlindIndex = getNextActiveIndex(players, dealerIndex);
+  const bigBlindIndex = getNextActiveIndex(players, getNextActiveIndex(players, dealerIndex));
+  const pot = setBlind(players[smallBlindIndex], game.smallBlind) + setBlind(players[bigBlindIndex], game.bigBlind);
+
+  players[smallBlindIndex].currentBet = setBlind(players[smallBlindIndex], game.smallBlind);
+  players[smallBlindIndex].chips -= setBlind(players[smallBlindIndex], game.smallBlind);
+  players[bigBlindIndex].currentBet = setBlind(players[bigBlindIndex], game.bigBlind);
+  players[bigBlindIndex].chips -= setBlind(players[bigBlindIndex], game.bigBlind);
+
+  return { ...game, deck, players, currentBet, pot, phase, currentPlayerIndex, lastRaisePlayerIndex, tableCards };
+}
+
 export {
   createPlayer,
   createGame,
   DealCards,
+  testDealCards,
   raiseHandler,
   callHandler,
   checkHandler,
   foldHandler,
   allInHandler,
+  updateRoundState,
 }
