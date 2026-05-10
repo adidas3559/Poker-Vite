@@ -12,12 +12,16 @@ import {
   allInHandler,
 } from '../controllers/gameService';
 import type { GameState } from '../types/GameState';
+import WinnerPopup from './WinnerPopup';
 
 const TestGameView = () => {
   const [game, setGame] = useState<GameState>(initGame());
   const [raiseInput, setRaiseInput] = useState<number>(0);
 
   const { players, tableCards, pot, currentBet, currentPlayerIndex, dealerIndex, phase } = game;
+
+  const activePlayers = players.filter(p => p.status !== 'busted');
+  const gameWinner = activePlayers.length === 1 ? activePlayers[0] : null;
 
   const drawHandler = () => {
     const newGame = testStartNewRound(game);
@@ -61,6 +65,7 @@ const TestGameView = () => {
 
   return (
     <>
+      {gameWinner && <WinnerPopup winner={gameWinner} />}
       <div className="gameWrapper">
         {phase === 'waiting' &&
           <div className='drawBtn'>

@@ -6,6 +6,8 @@ import JoinGame from './pages/JoinGame';
 import HostGame from './pages/HostGame';
 import TestGameView from './pages/TestGameView';
 import MobileTestGameView from './pages/MobileTestGameView';
+import PostGame from './pages/PostGame';
+import Lobby from './pages/Lobby';
 // import logo from './assets/poker-logo.png';
 
 function App() {
@@ -26,6 +28,8 @@ function App() {
           <Route path="/host-game" element={<HostGame />} />
           <Route path="/test-game" element={<TestGameView />} />
           <Route path="/mobile-test" element={<MobileTestGameView />} />
+          <Route path="/post-game" element={<PostGame />} />
+          <Route path="/lobby" element={<Lobby />} />
         </Routes>
       </BrowserRouter>
     </>

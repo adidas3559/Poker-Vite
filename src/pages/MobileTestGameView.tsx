@@ -13,10 +13,10 @@ import {
   allInHandler,
 } from '../controllers/gameService';
 import type { GameState, PlayerState } from '../types/GameState';
+import WinnerPopup from './WinnerPopup';
 
 const MobileTestGameView = () => {
   const [game, setGame] = useState<GameState>(initGame());
-  console.log('🚀 ~ MobileTestGameView ~ game:', game);
   const [raiseInput, setRaiseInput] = useState<number>(0);
   const [expandedSeat, setExpandedSeat] = useState<number | null>(0);
   const [expandedTableCards, setExpandedTableCards] = useState(false);
@@ -50,10 +50,7 @@ const MobileTestGameView = () => {
   const getNextActivePlayer = (startIndex: number) => {
     let index = startIndex;
     do {
-      console.log('🚀 ~ getNextActivePlayer ~ index:', index);
       index = (index + 1) % players.length;
-      console.log('🚀 ~ getNextActivePlayer ~ index:', index);
-      console.log('player[index]', players[index]);
     } while (players[index].status === 'busted' || players[index].status === 'folded');
     return index;
   };
@@ -72,10 +69,14 @@ const MobileTestGameView = () => {
   const inActivePhase =
     phase === 'preflop' || phase === 'flop' || phase === 'turn' || phase === 'river';
 
+  const activePlayers = players.filter(p => p.status !== 'busted');
+  const gameWinner = activePlayers.length === 1 ? activePlayers[0] : null;
+
   const currentPlayer = players[currentPlayerIndex];
-  console.log('🚀 ~ MobileTestGameView ~ currentPlayer:', currentPlayer);
 
   return (
+    <>
+    {gameWinner && <WinnerPopup winner={gameWinner} />}
     <div className="mobile-wrapper">
 
       <div className="mobile-table-area">
@@ -87,7 +88,6 @@ const MobileTestGameView = () => {
         >
           <div className="mobile-community-cards">
             {tableCards.map((card, i) => {
-              console.log('🚀 ~ MobileTestGameView ~ card:', card);
               return <CardFront key={i} card={card} />;
             })}
           </div>
@@ -177,6 +177,7 @@ const MobileTestGameView = () => {
       </div>
 
     </div>
+    </>
   );
 };
 

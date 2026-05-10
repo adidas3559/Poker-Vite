@@ -33,7 +33,6 @@ const createGame = (players: PlayerState[]): GameState => {
 }
 
 const DealCards = (game: GameState) => {
-  console.log('deal cards');
   const deck = createDeck();
   shuffleDeck(deck);
   
@@ -66,39 +65,33 @@ const DealCards = (game: GameState) => {
 
 
   const currentBet = game.bigBlind;
-  const pot = game.smallBlind + game.bigBlind;
   const phase: GamePhase = 'preflop';
 
   if (howManyActivePlayers(players) === 2) {
-    const currentPlayerIndex = dealerIndex; // first to act is dealer/small blind preflop
+    const currentPlayerIndex = dealerIndex;
     const lastRaisePlayerIndex = dealerIndex;
-    players[dealerIndex].currentBet = setBlind(players[dealerIndex], game.smallBlind); // Dealer is small blind
-    players[dealerIndex].chips = players[dealerIndex].chips - setBlind(players[dealerIndex], game.smallBlind);
-    players[getNextActiveIndex(players, dealerIndex)].currentBet = setBlind(players[getNextActiveIndex(players, dealerIndex)], game.bigBlind); // Other player is big blind
-    players[getNextActiveIndex(players, dealerIndex)].chips = (players[getNextActiveIndex(players, dealerIndex)].chips - setBlind(players[getNextActiveIndex(players, dealerIndex)], game.bigBlind));
+    const smallBlindIndex = dealerIndex;
+    const bigBlindIndex = getNextActiveIndex(players, dealerIndex);
+    const pot = setBlind(players[smallBlindIndex], game.smallBlind) + setBlind(players[bigBlindIndex], game.bigBlind);
 
-    return {
-      ...game,
-      players,
-      currentBet,
-      pot,
-      phase,
-      currentPlayerIndex,
-      lastRaisePlayerIndex,
-    }
+    players[smallBlindIndex].currentBet = setBlind(players[smallBlindIndex], game.smallBlind);
+    players[smallBlindIndex].chips -= setBlind(players[smallBlindIndex], game.smallBlind);
+    players[bigBlindIndex].currentBet = setBlind(players[bigBlindIndex], game.bigBlind);
+    players[bigBlindIndex].chips -= setBlind(players[bigBlindIndex], game.bigBlind);
+
+    return { ...game, deck, players, currentBet, pot, phase, currentPlayerIndex, lastRaisePlayerIndex, tableCards };
   }
 
-  if (howManyActivePlayers(players) === 1) {
-    console.log('GAME WINNER!!!!');
-    
-  }
+  const smallBlindIndex = getNextActiveIndex(players, dealerIndex);
+  const bigBlindIndex = getNextActiveIndex(players, smallBlindIndex);
+  const currentPlayerIndex = getNextActiveIndex(players, bigBlindIndex);
+  const lastRaisePlayerIndex = currentPlayerIndex;
+  const pot = setBlind(players[smallBlindIndex], game.smallBlind) + setBlind(players[bigBlindIndex], game.bigBlind);
 
-  const currentPlayerIndex = getNextActiveIndex(players, dealerIndex + 2);
-  const lastRaisePlayerIndex = getNextActiveIndex(players, dealerIndex + 2);
-  players[getNextActiveIndex(players, dealerIndex)].currentBet = setBlind(players[getNextActiveIndex(players, dealerIndex)], game.smallBlind);
-  players[getNextActiveIndex(players, dealerIndex)].chips = players[getNextActiveIndex(players, dealerIndex)].chips - setBlind(players[getNextActiveIndex(players, dealerIndex)], game.smallBlind);
-  players[getNextActiveIndex(players, dealerIndex + 1)].currentBet = setBlind(players[getNextActiveIndex(players, dealerIndex + 1)], game.bigBlind);
-  players[getNextActiveIndex(players, dealerIndex + 1)].chips = players[getNextActiveIndex(players, dealerIndex + 1)].chips - setBlind(players[getNextActiveIndex(players, dealerIndex + 1)], game.bigBlind);
+  players[smallBlindIndex].currentBet = setBlind(players[smallBlindIndex], game.smallBlind);
+  players[smallBlindIndex].chips -= setBlind(players[smallBlindIndex], game.smallBlind);
+  players[bigBlindIndex].currentBet = setBlind(players[bigBlindIndex], game.bigBlind);
+  players[bigBlindIndex].chips -= setBlind(players[bigBlindIndex], game.bigBlind);
 
   return {
     ...game,
@@ -251,7 +244,6 @@ const callHandler = (game: GameState): GameState => {
 
 const checkNextPlayer = (game: GameState) => {
   const nextPlayerIndex = getNextActiveIndex(game.players, game.currentPlayerIndex);
-  console.log('🚀 ~ checkNextPlayer ~ nextPlayerIndex:', nextPlayerIndex);
   if (nextPlayerIndex === game.lastRaisePlayerIndex) {
     return { currentPlayerIndex: game.currentPlayerIndex, lastPlayer: true }
   } else {
@@ -262,38 +254,26 @@ const checkNextPlayer = (game: GameState) => {
 
 const nextPlayersTurn = (game: GameState) => {
   let currentPlayerIndex = game.currentPlayerIndex;
-  console.log('🚀 ~ nextPlayersTurn ~ currentPlayerIndex:', currentPlayerIndex);
   do {
-    console.log('NextPlayersturn while')
     if (currentPlayerIndex >= game.players.length - 1) {
-      console.log('inside if', currentPlayerIndex);
-      console.log('game.players - 1', game.players.length);
       currentPlayerIndex = 0;
     } else {
-      console.log('inside else', currentPlayerIndex);
       currentPlayerIndex++;
     }
   } while ((game.players[currentPlayerIndex] ?? game.players[0]).status === 'folded' || (game.players[currentPlayerIndex] ?? game.players[0]).status === 'busted')
-  console.log('🚀 ~ nextPlayersTurn ~ currentPlayerIndex:', currentPlayerIndex);
   return currentPlayerIndex;
 }
 
 
 const updateRoundState = (game: GameState): GameState => {
-  console.log('🚀 ~ updateRoundState ~ game:', game);
   const deck = game.deck;
-  console.log('🚀 ~ updateRoundState ~ deck:', deck);
   if (game.phase === 'preflop') {
     const phase = 'flop';
     drawCard(deck); // burn card
     const flopCard1: CardState = drawCard(deck);
-    console.log('🚀 ~ updateRoundState ~ flopCard1:', flopCard1);
     const flopCard2: CardState = drawCard(deck);
-    console.log('🚀 ~ updateRoundState ~ flopCard2:', flopCard2);
     const flopCard3: CardState = drawCard(deck);
-    console.log('🚀 ~ updateRoundState ~ flopCard3:', flopCard3);
     const tableCards: CardState[] = [flopCard1, flopCard2, flopCard3];
-    console.log('🚀 ~ updateRoundState ~ tableCards:', tableCards);
     const {currentPlayerIndex, lastRaisePlayerIndex} = getLeftOfDealer(game);
     return {
       ...game,
@@ -424,10 +404,7 @@ type TestDealConfig = {
 }
 
 const testDealCards = (game: GameState, config: TestDealConfig): GameState => {
-  console.log('🚀 ~ testDealCards ~ config:', config);
-  console.log('test deal cards');
   const deck = [...config.deck];
-  console.log('🚀 ~ testDealCards ~ deck:', deck);
   const tableCards: CardState[] = [];
 
   const players: PlayerState[] = game.players.map((player, i) => ({
