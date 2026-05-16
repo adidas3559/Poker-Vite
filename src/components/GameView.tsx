@@ -15,7 +15,7 @@ import {
 import type { GameState, PlayerState } from '../types/GameState';
 import WinnerPopup from './WinnerPopup';
 
-const MobileTestGameView = () => {
+const GameView = () => {
   const [game, setGame] = useState<GameState>(initGame());
   const [raiseInput, setRaiseInput] = useState<number>(0);
   const [expandedSeat, setExpandedSeat] = useState<number | null>(0);
@@ -37,9 +37,7 @@ const MobileTestGameView = () => {
   };
 
   const handleAllIn = () => setGame(allInHandler(game));
-  const handleCheck = () => {
-    return setGame(checkHandler(game));
-  };
+  const handleCheck = () => setGame(checkHandler(game));
   const handleCall  = () => setGame(callHandler(game));
   const handleFold  = () => setGame(foldHandler(game));
 
@@ -181,4 +179,4 @@ const MobileTestGameView = () => {
   );
 };
 
-export default MobileTestGameView;
+export default GameView;
