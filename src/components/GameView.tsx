@@ -1,21 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './Game.css';
 import './MobileGame.css';
 import CardFront from './CardFront';
+import CardBack from './CardBack';
 import table1 from '../assets/table1.png';
-import {
-  initGame,
-  testStartNewRound,
-  raiseHandler,
-  callHandler,
-  checkHandler,
-  foldHandler,
-  allInHandler,
-} from '../controllers/gameService';
+import { initGame } from '../controllers/gameService';
 import type { GameState, PlayerState } from '../types/GameState';
 import WinnerPopup from './WinnerPopup';
+import { SocketContext } from '../contexts/SocketContext';
 
 const GameView = () => {
+  const { socket, connect } = useContext(SocketContext);
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const { roomCode: stateRoomCode, playerId: statePlayerId, isHost } = (state ?? {}) as { roomCode?: string; playerId?: string; isHost?: boolean };
+  const roomCode = stateRoomCode ?? sessionStorage.getItem('poker_roomCode') ?? '';
+  const myPlayerId = statePlayerId ?? sessionStorage.getItem('poker_playerId') ?? '';
+  void isHost;
+
   const [game, setGame] = useState<GameState>(initGame());
   const [raiseInput, setRaiseInput] = useState<number>(0);
   const [expandedSeat, setExpandedSeat] = useState<number | null>(0);
@@ -23,23 +26,44 @@ const GameView = () => {
 
   const { players, tableCards, pot, currentBet, currentPlayerIndex, dealerIndex, phase } = game;
 
-  const drawHandler = () => {
-    const newGame = testStartNewRound(game);
-    setGame(newGame);
-    setRaiseInput(newGame.bigBlind);
+  useEffect(() => {
+    const activeSocket = socket ?? connect();
+
+    activeSocket.emit('initGame', { roomCode });
+
+    activeSocket.on('gameInitialized', ({ gameState }: { gameState: GameState }) => {
+      setGame(gameState);
+      setRaiseInput(gameState.bigBlind);
+    });
+
+    activeSocket.on('roundStarted', ({ gameState }: { gameState: GameState }) => {
+      setGame(gameState);
+      setRaiseInput(gameState.bigBlind);
+    });
+
+    activeSocket.on('gameUpdated', ({ gameState }: { gameState: GameState }) => {
+      setGame(gameState);
+    });
+
+    return () => {
+      activeSocket.off('gameInitialized');
+      activeSocket.off('roundStarted');
+      activeSocket.off('gameUpdated');
+    };
+  }, [socket, roomCode, connect]);
+
+  const handleDisconnect = () => {
+    const playerId = sessionStorage.getItem('poker_playerId') ?? '';
+    socket?.emit('leaveRoom', { roomCode, playerId });
+    navigate('/');
   };
 
-  const handleRaise = () => {
-    const newGame = raiseHandler(game, raiseInput);
-    if (newGame.error) return;
-    setGame(newGame);
-    setRaiseInput(game.bigBlind);
-  };
-
-  const handleAllIn = () => setGame(allInHandler(game));
-  const handleCheck = () => setGame(checkHandler(game));
-  const handleCall  = () => setGame(callHandler(game));
-  const handleFold  = () => setGame(foldHandler(game));
+  const drawHandler = () => socket?.emit('startRound', { roomCode });
+  const handleRaise = () => socket?.emit('raise', { roomCode, betAmount: raiseInput });
+  const handleAllIn = () => socket?.emit('allIn', { roomCode });
+  const handleCheck = () => socket?.emit('check', { roomCode });
+  const handleCall  = () => socket?.emit('call', { roomCode });
+  const handleFold  = () => socket?.emit('fold', { roomCode });
 
   const toggleExpand = (index: number) => {
     setExpandedSeat(prev => prev === index ? null : index);
@@ -54,15 +78,8 @@ const GameView = () => {
   };
 
   const howManyActivePlayers = (players: PlayerState[]) => {
-    const activePlayerCount = players.reduce((count, player) => {
-      if (player.status === 'busted') {
-        return count;
-      }
-      return count + 1;
-    }, 0);
-    
-    return activePlayerCount;
-  }
+    return players.reduce((count, player) => player.status === 'busted' ? count : count + 1, 0);
+  };
 
   const inActivePhase =
     phase === 'preflop' || phase === 'flop' || phase === 'turn' || phase === 'river';
@@ -70,7 +87,15 @@ const GameView = () => {
   const activePlayers = players.filter(p => p.status !== 'busted');
   const gameWinner = activePlayers.length === 1 ? activePlayers[0] : null;
 
-  const currentPlayer = players[currentPlayerIndex];
+  const myIndex = players.findIndex(p => p.id === myPlayerId);
+  const isMyTurn = myIndex !== -1 && myIndex === currentPlayerIndex;
+  const isAllIn = isMyTurn && players[myIndex]?.chips === 0 && players[myIndex]?.status !== 'busted' && players[myIndex]?.status !== 'folded';
+
+  useEffect(() => {
+    if (!isAllIn) return;
+    const timeout = setTimeout(() => handleCheck(), 1000);
+    return () => clearTimeout(timeout);
+  }, [isAllIn]);
 
   return (
     <>
@@ -99,52 +124,55 @@ const GameView = () => {
           if (player.status === 'busted') return null;
           const isActive   = index === currentPlayerIndex;
           const isFolded   = player.status === 'folded';
+          const isMe       = index === myIndex;
           const isExpanded = expandedSeat === index;
 
           return (
             <div
               className={`mobile-seat mobile-seat-${index + 1}${isFolded ? ' folded' : ''}${isExpanded ? ' expanded' : ''}`}
               key={index}
-              onClick={() => player.hand.length > 0 && toggleExpand(index)}
+              onClick={() => isMe && player.hand.length > 0 && toggleExpand(index)}
             >
               <div className='mobile-nameplateWrapper'>
                 <div className={`mobile-nameplate${isActive ? ' active' : ''}`}>
                   <span className="m-name">{player.name}</span>
                   <span className="m-chips">{player.chips.toLocaleString()}</span>
                 </div>
-  
+
                 {player.currentBet > 0 && (
                   <span className="mobile-bet-indicator">{player.currentBet}</span>
                 )}
 
                 {player.hand.length > 0 && (
                   <div className="mobile-card-wrapper">
-                    <CardFront card={player.hand[0]} />
-                    <CardFront card={player.hand[1]} />
+                    {isMe
+                      ? <><CardFront card={player.hand[0]} /><CardFront card={player.hand[1]} /></>
+                      : <><CardBack /><CardBack /></>
+                    }
                   </div>
                 )}
               </div>
-
-              
 
               {index === dealerIndex && <span className="pin dealer">D</span>}
               {howManyActivePlayers(players) === 2 && index === dealerIndex && <span className="pin smallBlind">SB</span>}
               {howManyActivePlayers(players) === 2 && index === getNextActivePlayer(dealerIndex) && <span className="pin bigBlind">BB</span>}
               {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(dealerIndex) && <span className="pin smallBlind">SB</span>}
-              {howManyActivePlayers(players) > 2 && index ===getNextActivePlayer(getNextActivePlayer(dealerIndex)) && <span className="pin bigBlind">BB</span>}
+              {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(getNextActivePlayer(dealerIndex)) && <span className="pin bigBlind">BB</span>}
             </div>
           );
         })}
       </div>
 
       <div className="mobile-actions">
-        {(phase === 'waiting' || phase === 'end') && (
+        <button className="btn btn-secondary" onClick={handleDisconnect}>Leave</button>
+
+        {(phase === 'waiting' || phase === 'end') && myIndex !== -1 && myIndex === dealerIndex && (
           <button className="btn mobile-full-btn" onClick={drawHandler}>
             {phase === 'waiting' ? 'Deal Cards' : 'Next Round'}
           </button>
         )}
 
-        {inActivePhase && (
+        {inActivePhase && isMyTurn && !isAllIn && (
           <>
             <div className="mobile-raise-row">
               <input
@@ -156,16 +184,16 @@ const GameView = () => {
               <button className="btn" onClick={handleRaise}>Raise</button>
             </div>
             <div className="mobile-action-buttons">
-              {currentPlayer.currentBet === currentBet &&
+              {players[currentPlayerIndex].currentBet === currentBet &&
                 <button className="btn" onClick={handleCheck}>Check</button>
               }
-              {currentPlayer.currentBet < currentBet &&
+              {players[currentPlayerIndex].currentBet < currentBet &&
                 <button className="btn" onClick={handleCall}>Call</button>
               }
-              {currentPlayer.chips !== 0 &&
+              {players[currentPlayerIndex].chips !== 0 &&
                 <button className="btn" onClick={handleAllIn}>All In</button>
               }
-              {currentPlayer.chips === 0 &&
+              {players[currentPlayerIndex].chips === 0 &&
                 <button className="btn" onClick={handleCheck}>Skip</button>
               }
               <button className="btn" onClick={handleFold}>Fold</button>

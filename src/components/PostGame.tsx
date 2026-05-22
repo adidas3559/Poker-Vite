@@ -1,5 +1,7 @@
-import { useLocation, Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { PlayerState } from '../types/GameState';
+import { SocketContext } from '../contexts/SocketContext';
 import './PostGame.css';
 
 type LocationState = {
@@ -7,10 +9,27 @@ type LocationState = {
 };
 
 const PostGame = () => {
+  const { socket, connect } = useContext(SocketContext);
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state as LocationState | null;
 
   const winner = state?.winner;
+
+  const handleRematch = () => {
+    const activeSocket = socket ?? connect();
+    const roomCode = sessionStorage.getItem('poker_roomCode') ?? '';
+    activeSocket.emit('rejoinLobby', { roomCode });
+    navigate('/lobby');
+  };
+
+  const handleHome = () => {
+    const activeSocket = socket ?? connect();
+    const roomCode = sessionStorage.getItem('poker_roomCode') ?? '';
+    const playerId = sessionStorage.getItem('poker_playerId') ?? '';
+    activeSocket.emit('leaveRoom', { roomCode, playerId });
+    navigate('/');
+  };
 
   return (
     <div className="postgame-wrapper">
@@ -26,8 +45,8 @@ const PostGame = () => {
         )}
 
         <div className="postgame-actions">
-          <Link className="btn" to="/lobby">Rematch</Link>
-          <Link className="btn btn-secondary" to="/">Home</Link>
+          <button className="btn" onClick={handleRematch}>Rematch</button>
+          <button className="btn btn-secondary" onClick={handleHome}>Home</button>
         </div>
       </div>
     </div>

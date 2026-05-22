@@ -1,21 +1,24 @@
-import { createContext, useState, type ReactNode } from "react"
+import { createContext, useState, useCallback, useRef, type ReactNode } from "react"
 import { type Socket, io } from "socket.io-client";
 
 type SocketContextType = {
   socket: Socket | null;
-  connect: () => void;
+  connect: () => Socket;
 };
 
-const SocketContext = createContext<SocketContextType>({ socket: null, connect: () => {} });
+const SocketContext = createContext<SocketContextType>({ socket: null, connect: () => { throw new Error('SocketContext not initialised') } });
 
 const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
-  const connect = () => {
-    // TODO put this url in an env file
-    const s = io('http://localhost:5174')
+  const connect = useCallback(() => {
+    if (socketRef.current) return socketRef.current;
+    const s = io(import.meta.env.VITE_SOCKET_URL);
+    socketRef.current = s;
     setSocket(s);
-  }
+    return s;
+  }, []);
 
   return <SocketContext.Provider value={{ socket, connect }}>{children}</SocketContext.Provider>
 }

@@ -4,50 +4,82 @@ import { SocketContext } from '../contexts/SocketContext';
 import './Lobby.css';
 
 type LocationState = {
-  roomName: string;
+  roomName?: string;
+  roomCode?: string;
   nickname: string;
 };
+
+type RoomState = {
+  roomName: string;
+  roomCode: string;
+  host: string;
+  players: { id: string, socketId: string, nickname: string }[];
+}
 
 const Lobby = () => {
   const { socket, connect } = useContext(SocketContext);
   const { state } = useLocation();
-  const { roomName, nickname } = state as LocationState;
+  const { roomName: initialRoomName, roomCode: initialRoomCode, nickname: initialNickname } = (state ?? {}) as LocationState;
+  const nickname = initialNickname ?? sessionStorage.getItem('poker_nickname') ?? '';
   const navigate = useNavigate();
 
-  const [roomCode, setRoomCode] = useState<string | null>(null);
+  const [roomCode, setRoomCode] = useState(initialRoomCode ?? sessionStorage.getItem('poker_roomCode') ?? '');
+  const [roomName, setRoomName] = useState(initialRoomName ?? sessionStorage.getItem('poker_roomName') ?? '');
+  // const [playerId, setPlayerId] = useState('');
   const [players, setPlayers] = useState<string[]>([nickname]);
 
-  useEffect(() => {
-    connect();
-  }, []);
+  const [isHost, setIsHost] = useState(!!initialRoomName);
+
+  const handleHome = () => {
+    const roomCode = sessionStorage.getItem('poker_roomCode') ?? '';
+    const playerId = sessionStorage.getItem('poker_playerId') ?? '';
+    socket?.emit('leaveRoom', { roomCode, playerId });
+    navigate('/');
+  };
 
   useEffect(() => {
-    if (!socket) return;
+    const activeSocket = socket ?? connect();
+    if (!state) {
+      const storedRoomCode = sessionStorage.getItem('poker_roomCode') ?? '';
+      activeSocket.emit('rejoinLobby', { roomCode: storedRoomCode, playerId: sessionStorage.getItem('poker_playerId') ?? '' });
+    }
+  }, [socket, connect]);
 
-    socket.emit('createRoom', { roomName, nickname });
+  useEffect(() => {
+    const activeSocket = socket ?? connect();
 
-    socket.on('roomCreated', ({ roomCode: code }: { roomCode: string }) => {
-      setRoomCode(code);
+    activeSocket.on('lobbyUpdated', ({ room, playerId, nickname: nick }: { room: RoomState, playerId?: string, nickname?: string }) => {
+      setRoomCode(room.roomCode);
+      setRoomName(room.roomName);
+      setPlayers(room.players.map(p => p.nickname));
+      sessionStorage.setItem('poker_roomCode', room.roomCode);
+      sessionStorage.setItem('poker_roomName', room.roomName);
+      if (playerId) sessionStorage.setItem('poker_playerId', playerId);
+      if (nick) sessionStorage.setItem('poker_nickname', nick);
+      console.log('🚀 ~ Lobby ~ nick:', nick);
+      console.log('🚀 ~ Lobby ~ room:', room);
+      const currentNickname = nick ?? sessionStorage.getItem('poker_nickname') ?? '';
+      setIsHost(currentNickname === room.host);
     });
 
-    socket.on('playerJoined', ({ nickname: joined }: { nickname: string }) => {
-      setPlayers((prev) => [...prev, joined]);
+    activeSocket.on('gameStarted', ({ roomCode, playerId }: { roomCode: string, playerId: string }) => {
+      navigate('/game', { state: { roomCode, playerId, isHost } });
     });
 
     return () => {
-      socket.off('roomCreated');
-      socket.off('playerJoined');
+      activeSocket.off('lobbyUpdated');
+      activeSocket.off('gameStarted');
     };
-  }, [socket]);
+  }, [socket, isHost, connect]);
 
   return (
     <div className="lobby-wrapper">
       <div className="lobby-card">
-        <h1 className="lobby-title">{roomName}</h1>
+        <h1 className="lobby-title">{roomName || '—'}</h1>
 
         <div className="room-code-display">
           <p className="room-code-label">Room Code</p>
-          <p className="room-code-value">{roomCode ?? '—'}</p>
+          <p className="room-code-value">{roomCode || '—'}</p>
         </div>
 
         <div className="lobby-players">
@@ -57,9 +89,12 @@ const Lobby = () => {
           ))}
         </div>
 
-        <button className="btn" onClick={() => navigate('/test-game')}>
-          Start Game
-        </button>
+        {isHost && (
+          <button className="btn" onClick={() => socket?.emit('startGame', { roomCode })}>
+            Start Game
+          </button>
+        )}
+        <button className="btn btn-secondary" onClick={handleHome}>Home</button>
       </div>
     </div>
   );
