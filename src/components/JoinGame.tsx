@@ -1,19 +1,14 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SocketContext } from '../contexts/SocketContext';
 import './JoinGame.css';
 
 const JoinGame = () => {
   const [roomCode, setRoomCode] = useState('');
   const [nickname, setNickname] = useState('');
   const navigate = useNavigate();
-  const { connect } = useContext(SocketContext);
 
   const handleJoin = () => {
     if (!roomCode.trim() || !nickname.trim()) return;
-    const socket = connect();
-    console.log('🚀 ~ handleJoin ~ socket:', socket);
-    socket.emit('joinRoom', { roomCode, nickname });
     navigate('/lobby', { state: { roomCode, nickname } });
   };
 

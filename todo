@@ -1,5 +1,9 @@
 TODO
 
+Bug where if last player raises, it moves on to next game phase
+
+Bug where players able to raise into negative numbers!
+
 I had it all working before refactor but now it has general bugs like blinds getting confused after a few rounds,
 players hitting negative numbers, and maybe more
 
