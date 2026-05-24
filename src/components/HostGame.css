@@ -1,0 +1,78 @@
+.lobby-wrapper {
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff4bd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lobby-card {
+  background-color: #1c1c1c;
+  border-radius: 12px;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-width: 340px;
+}
+
+.lobby-title {
+  color: #c12833;
+  font-size: 2rem;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.room-code-display {
+  background-color: #2e2e2e;
+  border: 2px solid #7e7e7e;
+  border-radius: 8px;
+  padding: 12px 32px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.room-code-label {
+  font-size: 12px;
+  color: #7e7e7e;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.room-code-value {
+  font-size: 2.2rem;
+  color: #73ea9f;
+  margin: 0;
+  letter-spacing: 6px;
+}
+
+.lobby-input {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #2e2e2e;
+  border: 2px solid #7e7e7e;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: white;
+  font-family: 'Chinese Rocks';
+  font-size: 16px;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.lobby-input:focus {
+  border-color: #c12833;
+}
+
+.lobby-input::placeholder {
+  color: #555;
+}
+
+.lobby-card .btn {
+  margin-top: 8px;
+  font-size: 22px;
+}

@@ -4,6 +4,7 @@ import Card from './Card';
 import { contestHands, getHandRanking } from '../controllers/game';
 
 type states = 'none' | 'preflop' | 'flop' | 'turn' | 'river' | 'end';
+type nestedPlayers = (Player | Player[])[];
 // type status = 'none' | 'error' | 'winner';
 const handOrder = ['highCard', 'pair', 'twoPair', 'threeOfAKind', 'straight', 'flush', 'fullHouse', 'fourOfAKind', 'straightFlush', 'royalFlush'];
 
@@ -19,7 +20,7 @@ class Game {
   public gameState: states;
   public tableCards: Card[];
   public deck: Deck;
-  public winners: Player[];
+  public winners: nestedPlayers;
 
   constructor() {
     // this will be moved to a menu
@@ -87,12 +88,13 @@ class Game {
     });
 
     const testHands: [Card, Card][] = [
-      [new Card('ace', 'hearts'),   new Card('king', 'hearts')],   // Blake
+      // [new Card('ace', 'hearts'),   new Card('king', 'hearts')],   // Blake
+      [new Card('queen', 'hearts'),   new Card('queen', 'clubs')],   // Blake
       [new Card('5', 'clubs'),      new Card('5', 'diamonds')],    // Alissa
       [new Card('jack', 'spades'),  new Card('10', 'spades')],     // Stephen
       [new Card('2', 'clubs'),      new Card('7', 'diamonds')],    // Caitlyn
-      [new Card('queen', 'hearts'), new Card('queen', 'clubs')],   // Ben
-      [new Card('9', 'hearts'),     new Card('8', 'hearts')],      // Max
+      [new Card('9', 'hearts'),     new Card('8', 'hearts')],      // Ben
+      [new Card('queen', 'hearts'), new Card('queen', 'clubs')],   // Max
     ];
 
     const start = this.getNextActiveIndex(this.players, this.dealerIndex);
@@ -187,7 +189,6 @@ class Game {
     // this.players[this.getPlayerIndex(2)].setChips(this.players[this.getPlayerIndex(2)].chips - this.bigBlind);
 
     if (this.howManyActivePlayers(this.players) === 2) {
-      console.log('two players left!');
       this.currentPlayerIndex = this.dealerIndex; // first to act is dealer/small blind preflop
       this.lastRaisePlayerIndex = this.dealerIndex;
       this.players[this.dealerIndex].setCurrentBet(this.smallBlind); // Dealer is small blind
@@ -391,63 +392,62 @@ class Game {
       this.getLeftOfDealer();
     } else {
       const nonFoldedPlayers = this.players.filter(player => !player.folded);
-      console.log('🚀 ~ Game ~ nonFoldedPlayers:', nonFoldedPlayers);
       const finalHands = nonFoldedPlayers.map(player => ({ ...getHandRanking(player, this.tableCards)}));
-      console.log('🚀 ~ Game ~ finalHands:', finalHands);
       finalHands.sort((a, b) => {
         const handA = handOrder.indexOf(a.highestHand);
         const handB = handOrder.indexOf(b.highestHand);
 
         return handB - handA;
       });
-      console.log('🚀 ~ Game ~ finalHands after sort:', finalHands);
-
-      const highestHand = finalHands[0].highestHand;
-      console.log('🚀 ~ Game ~ highestHand:', highestHand);
-      const highestPlayers = finalHands.filter(hand => hand.highestHand === highestHand);
-      const winners = contestHands(highestPlayers);
-      this.declareWinner(winners.map(winner => winner.player));
+      // const highestPlayers = finalHands.filter(hand => hand.highestHand === highestHand);
+      const winners = contestHands(finalHands);
+      this.declareWinner(winners);
     }
   }
 
-  public declareWinner = (winners: Player[]) => {
-     if (winners.length === 0) {
+  public declareWinner = (winners: nestedPlayers) => {
+    console.log('🚀 ~ Game ~ winners:', winners);
+
+    
+
+    if (winners.length === 0) {
       console.error('Got 0 winners')
       return;
     }
     this.winners = winners;
-    if (winners.length === 1) {
-      console.log('winner!!', winners[0]);
-    } else {
-      console.log('winners!!', winners);
-    }
 
-    // sorts by lowest to highest bet
-    winners.sort((a, b) => a.currentBet - b.currentBet);
-
-    winners.map(winner => {
-      let sidePot: number = 0;
-      this.players.map(player => {
-        if (player.currentBet >= winner.currentBet) { // POSSIBLE BUG need to make sure busted players have no current bet
-          sidePot += winner.currentBet;
+    const getMaxWinning = (player: Player) => {
+      const players = this.players.filter(p => p.name !== player.name);
+      const playerBet = player.currentBet;
+      let maxWinning = playerBet;
+      players.map(player => {
+        if (player.currentBet <= playerBet) {
+          maxWinning += player.currentBet;
         } else {
-          sidePot += player.currentBet
+          maxWinning += playerBet;
         }
       });
-      const dividedPot = Math.round(sidePot / winners.length)
-      winner.setChips(winner.chips + dividedPot);
-      this.pot -= dividedPot;
-    });
 
-    // TODO if there's more of this.pot left over, then we'd need to figure out the runner ups
-    // TODO Need to create testing framework to test all this
+      return maxWinning;
+    }
 
-    // winners.map(winner => {
-    //   const dividedPot = Math.round(this.pot / winners.length)
-    //   winner.setChips(winner.chips + dividedPot);
-    // });
+    winners.forEach(winnerGroup => {
+      if (Array.isArray(winnerGroup)) {
+        winnerGroup.map(player => {
+          const maxWinning = getMaxWinning(player);
+          const wonChips = Math.round(maxWinning / winnerGroup.length) >= this.pot ? Math.round(maxWinning / winnerGroup.length) : Math.round(this.pot / winnerGroup.length);
+          player.setChips(player.chips + wonChips);
+          this.pot -= wonChips;
+        });
+      } else {
+        // give what they can get from this
+        const maxWinning = getMaxWinning(winnerGroup);
+        const wonChips = maxWinning <= this.pot ? Math.round(maxWinning) : this.pot;
+        winnerGroup.setChips(winnerGroup.chips + wonChips);
+        this.pot -= wonChips;
+      }
+    })
 
-    console.log('winners', winners);
 
     this.gameState = 'end';
     // Prepping for next round

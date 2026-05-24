@@ -1,17 +1,31 @@
 TODO
 
-BIG REFACTOR!:
-Talked to chatgpt (lol) and it was saying I shouldn't be mutating global state. First it gave how to do busted players.
-Then was saying no mutating global state, that will be too hard to debug for multiplayer. Instead use pure functions.
-Look at bottom of file "ARCHITECTURE NOTES FOR REFACTOR" section
+Bug where if last player raises, it moves on to next game phase
+
+Bug where players able to raise into negative numbers!
+
+I had it all working before refactor but now it has general bugs like blinds getting confused after a few rounds,
+players hitting negative numbers, and maybe more
+
+Fixed bug if only two left, Dealer is sb and other player is bb and that works but pin is showing other player as both.
+Fixed bug where last player wasn't putting in all in amount, removing 20 dollars from the game
+Fixed small bug where all in handler was calced wrong
+Fixed bug where last player was being added to combinedPlayers twice (if they were in a combined array).
+Fixed bug where if two players had same cards (same array in combinedPlayers) one would steal the others chips, even if neither of them won.
+Fixed bug when Ben gets his big blind and only has 2 chips going into it, he puts in 4 and gets -2 pot
+
+Fixed bug where if only two left, bug freezes game after flop check. 
+This was because nextPlayersTurn in GameLogic wasn't looping properly and was checking the original game.currentPlayerIndex over and over
+
 
 
 For Game model:
 get testing working so we can test bugs
 
-Handle All ins + side pots
-Get if player only can match some of the pot working
 Get if small or big blind can only handle a small part of the blind
+When he is busted next turn, Max gets both small and big blind
+
+
 
 
 LATER
@@ -20,22 +34,6 @@ with css, maybe get chips working? Or just generic blob amount moves around
 get amount of players and player names working, ie make menus
 Get report bug button that captues the game state so we can replicate
 Get multiplayer working
-
-
-POSSIBLE BUG
-will the fact that the same numbers get added to relevantCards as generic numbers affect something like flushes kickers?
-Probably not since flushes already have 5, the limit for kicker cards
-
-
-BUGS
-
-when testing something else, there was a game where there was no winners. I just called the whole game, nothing with raises or folds.
-The highest players data should've given it to max since he had an ace (14).
-Also caitlyn had an ace high card, and didn't appear in highestPlayers.
-Took screenshots for this on desktop
-
-When Testing, found something similar to above where it said alissa was winner with a high card, when she had very low cards.
-Plus, caitlyn actually had a pair of queens (other people had pairs too). So whole highestPlayer data is broken rn
 
 
 COMPLETED
@@ -52,12 +50,28 @@ Get if only 2 or 3 players left working
 If everyone but max and blake fold immediately, it's an infinite loop of checking because the lastplayerraise field is unreachable?
 Likely need to figure out better way to track last player than lastplayerraise
 
+Handle All ins + side pots
+Get if player only can match some of the pot working
+
+I have made a simpler way to grab the 5 most relevant card values.
+We'll need to rewrite ContestHands in game.ts
+Now we'll need to iterate through the remaining players, sort them by their best hand, 
+then sort each group of best hands by the highest of the 5 card value arrays.
+Once all players are sorted, if any are truly equal then they tie.
+Now we know 1st place, 2nd place, etc we can divvy the pot
+The most any player can earn is (their last current bet * number of players left at the end).
+Have a paper explaining this.
+
+BIG REFACTOR!:
+Talked to chatgpt (lol) and it was saying I shouldn't be mutating global state. First it gave how to do busted players.
+Then was saying no mutating global state, that will be too hard to debug for multiplayer. Instead use pure functions.
+Look at bottom of file "ARCHITECTURE NOTES FOR REFACTOR" section
+
 
 ARCHITECTURE NOTES FOR REFACTOR!!:
 I was looking at this as a object oriented project. But since it's a game, it's more of a state machine.
 OOP is more about models with internal mutable state.
 State Machines (functional programming) is more about pure functions transformming game state.
 State machines are much better for multiplayer games, especially ones like poker.
-
 
 

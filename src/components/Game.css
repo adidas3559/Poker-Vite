@@ -1,0 +1,284 @@
+.gameWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+  margin-top: 100px;
+}
+
+.table {
+  position: relative;
+  .tableImg {
+    transform: rotate(90deg);
+  }
+}
+
+.playerHand {
+  position: absolute;
+  display: flex;
+  gap: 10px;
+  z-index: 12;
+}
+
+.player1 {
+  left: 0;
+  top: 0;
+}
+
+.player2 {
+  left: 0;
+  bottom: 0;
+}
+
+.player3 {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.player4 {
+  right: 0;
+  bottom: 0;
+}
+
+.player5 {
+  right: 0;
+  top: 0;
+}
+
+.player6 {
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+}
+
+.card {
+  box-shadow: 5px 10px #888888;
+  background-color: #f7fae8;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
+  -webkit-box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
+  -moz-box-shadow: 10px 10px 20px 0px rgba(0,0,0,0.26);
+}
+
+.cardWrapper {
+  display: flex;
+  position: absolute;
+  transform: translate(-50%, -100%);
+}
+
+.playerHand .card {
+  width: 50px;
+  transition: all 100ms ease-in;
+  transform-origin: bottom center;
+}
+
+.playerHand .cardWrapper .card:first-child {
+  transform: rotate(-6deg);
+  z-index: 1;
+}
+
+.playerHand .cardWrapper .card:last-of-type {
+  transform: rotate(6deg);
+  margin-left: -40px;
+  z-index: 2;
+}
+
+.playerHand:hover .cardWrapper .card {
+  width: 120px;
+  z-index: 10;
+}
+
+.playerHand:hover .cardWrapper .card:first-child {
+  transform: rotate(-6deg);
+}
+
+.playerHand:hover .cardWrapper .card:last-child {
+  transform: rotate(6deg);
+  margin-left: -20px;
+}
+
+/* .playerHand.player6 .card {
+  width: 120px;
+} */
+
+.gameState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -318%);
+  margin: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.55);
+  color: #dad400;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  white-space: nowrap;
+  padding: 5px 18px;
+  border-radius: 20px;
+}
+
+.tableCards {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  z-index: 11;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tableCards .card {
+  width: 60px;
+  transition: all 100ms ease-in;
+}
+
+.tableCards:hover .card {
+  width: 120px;
+  z-index: 11;
+  /* height: 120px; */
+}
+
+.card img {
+  height: 100%;
+  width: 100%;
+}
+
+.card-back {
+  background-color: #1a3a6b;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.05) 0px,
+    rgba(255,255,255,0.05) 2px,
+    transparent 2px,
+    transparent 8px
+  );
+  border: 2px solid rgba(255,255,255,0.15);
+}
+
+.playerHand.folded .cardWrapper {
+  opacity: 0.6;
+}
+
+.playerHand.folded .playerHandName {
+  opacity: 0.6;
+}
+
+.playerHandName {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 70%);
+  background-color: #1c1c1c;
+  color: white;
+  padding: 8px 24px 10px;
+  /* clip-path: polygon(0% 0%, 100% 0%, 92% 100%, 8% 100%); */
+  border-radius: 7px;
+  border: 2px solid #7e7e7e;
+  z-index: 5;
+  text-align: center;
+  min-width: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.playerHandName .name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.playerHandName hr {
+  border: none;
+  border-top: 4px solid #7e7e7e;
+  border-radius: 12px;
+  margin: 0;
+  width: 100%;
+}
+
+.playerHandName .chips {
+  font-size: 15px;
+  color: #73ea9f;
+  font-weight: 700;
+}
+
+.playerHandName.active {
+  box-shadow: 0 0 16px 6px rgba(117, 19, 19, 0.85);
+}
+
+.pin {
+  position: absolute;
+  bottom: -90px;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  text-align: center;
+  background-color: #551116;
+  color: white;
+  padding: 2px 12px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.drawBtn {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  left: 0;
+  margin-left: 200px;
+}
+
+.winner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.winner-popup {
+  background: #1c1c1c;
+  border: 2px solid #73ea9f;
+  border-radius: 16px;
+  padding: 48px 64px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 0 40px 8px rgba(115, 234, 159, 0.35);
+}
+
+.winner-popup .winner-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #7e7e7e;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.winner-popup .winner-name {
+  font-size: 48px;
+  font-weight: 800;
+  color: #73ea9f;
+  margin: 0;
+}
+
+.winner-popup .winner-chips {
+  font-size: 20px;
+  color: #dad400;
+  font-weight: 700;
+}
+
+.winner-popup .btn {
+  margin-top: 16px;
+  padding: 12px 36px;
+  font-size: 16px;
+}

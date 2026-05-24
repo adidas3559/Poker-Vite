@@ -11,7 +11,9 @@ const twoOfAKind = (cardsByValue: Map<string, CardCompare>) => {
   // By adding underscore to key (_key), we get typescript to ignore that key isn't being used
   // eslint-disable-next-line
   const twoOfAKind = [...cardsByValue.entries()].filter(([_key, value]) => value.count === 2);  
-  const returnValue = twoOfAKind.map(card => (Card.getNumberValue(get(card, '[0]'))));
+  // const returnValue = twoOfAKind.map(card => (Card.getNumberValue(get(card, '[0]'))));
+  // const returnValue = get(twoOfAKind, '[0][1].cards', []).map(card => (Card.getNumberValue(get(card, 'number'))));
+  const returnValue = (twoOfAKind || []).map(group => get(group, '[1].cards', []).map(card => (Card.getNumberValue(get(card, 'number')))));
   return returnValue;
 }
 
@@ -19,7 +21,8 @@ const threeOfAKind = (cardsByValue: Map<string, CardCompare>) => {
   // By adding underscore to key (_key), we get typescript to ignore that key isn't being used
   // eslint-disable-next-line
   const threeOfAKind = [...cardsByValue.entries()].filter(([_key, value]) => value.count === 3);
-  const returnValue = threeOfAKind.map(card => (Card.getNumberValue(get(card, '[0]'))));
+  // const returnValue = threeOfAKind.map(card => (Card.getNumberValue(get(card, '[0]'))));
+  const returnValue = get(threeOfAKind, '[0][1].cards', []).map(card => (Card.getNumberValue(get(card, 'number'))));
   return returnValue;
 }
 
@@ -27,7 +30,8 @@ const fourOfAKind = (cardsByValue: Map<string, CardCompare>) => {
   // By adding underscore to key (_key), we get typescript to ignore that key isn't being used
   // eslint-disable-next-line
   const fourOfAKind = [...cardsByValue.entries()].filter(([_key, value]) => value.count === 4);
-  const returnValue = fourOfAKind.map(card => (Card.getNumberValue(get(card, '[0]'))));
+  // const returnValue = fourOfAKind.map(card => (Card.getNumberValue(get(card, '[0]'))));
+  const returnValue = get(fourOfAKind, '[0][1].cards', []).map(card => (Card.getNumberValue(get(card, 'number'))));
   return returnValue;
 }
 

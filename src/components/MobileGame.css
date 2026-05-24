@@ -1,0 +1,517 @@
+.mobile-wrapper {
+  width: 100vw;
+  height: 100vh;
+  background-color: #121212;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Table area ── */
+.mobile-table-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Landscape table image rotated to fill portrait area.
+   height: 100vw → becomes visual width after rotation.
+   width: 150vh  → becomes visual height after rotation (overshoots; clipped by overflow:hidden). */
+.mobile-table-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 100vw;
+  /* width: 150vh; */
+  transform: translate(-50%, -50%) rotate(90deg);
+  object-fit: cover;
+  z-index: 0;
+}
+
+/* Community cards + pot centered on table */
+.mobile-center-info {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  gap: 10px;
+  z-index: 5;
+}
+.mobile-center-info.expanded {
+  z-index: 11;
+}
+
+.mobile-community-cards {
+  display: flex;
+  gap: 5px;
+  cursor: pointer;
+  position: absolute;
+  bottom: -80px;
+}
+
+.mobile-community-cards .card {
+  width: 36px;
+  transition: width 150ms ease-in;
+}
+
+.mobile-center-info.expanded .card {
+  width: 72px;
+}
+
+.mobile-pot-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.mobile-pot-info span {
+  font-size: 14px;
+  color: white;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
+}
+
+.mobile-pot-info .pot {
+  background: rgba(0, 0, 0, 0.55);
+  color: orange;
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  white-space: nowrap;
+  padding: 5px 18px;
+  border-radius: 20px;
+}
+
+/* ── Seats ── */
+.mobile-seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  z-index: 10;
+  cursor: pointer;
+  transition: opacity 200ms;
+}
+
+.mobile-seat.folded {
+  z-index: 10;
+}
+
+.mobile-seat.folded {
+  opacity: 0.45;
+}
+
+/* Seat positions — clockwise from user (bottom) */
+.mobile-seat-1 {
+  bottom: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.mobile-seat-2 {
+  bottom: 22%;
+  left: 2%;
+}
+.mobile-seat-3 {
+  top: 38%;
+  left: 0%;
+  transform: translateY(-50%);
+}
+.mobile-seat-4 {
+  top: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.mobile-seat-5 {
+  top: 38%;
+  right: 0%;
+  transform: translateY(-50%);
+}
+.mobile-seat-6 {
+  bottom: 22%;
+  right: 2%;
+}
+.mobile-seat-1 .mobile-bet-indicator {
+  top: -150px;
+  right: 50%;
+  transform: translateX(50%);
+  --chip-dx: 0px;
+  --chip-dy: 50px;
+}
+.mobile-seat-2 .mobile-bet-indicator {
+  transform: translate(120%, 10px);
+  --chip-dx: -40px;
+  --chip-dy: 20px;
+}
+.mobile-seat-3 .mobile-bet-indicator {
+  transform: translate(120%, 10px);
+  --chip-dx: -40px;
+  --chip-dy: 0px;
+}
+.mobile-seat-4 .mobile-bet-indicator {
+  transform: translate(-120%, 10px);
+  --chip-dx: 0px;
+  --chip-dy: -40px;
+}
+.mobile-seat-5 .mobile-bet-indicator {
+  left: 0;
+  right: inherit;
+  transform: translate(-120%, 10px);
+  --chip-dx: 40px;
+  --chip-dy: 0px;
+}
+.mobile-seat-6 .mobile-bet-indicator {
+  transform: translate(-120%, 10px);
+  left: 0;
+  right: inherit;
+  --chip-dx: 40px;
+  --chip-dy: 20px;
+}
+
+/* ── Nameplate ── */
+.mobile-nameplateWrapper {
+  position: relative;
+}
+.mobile-nameplate {
+  background-color: rgba(20, 20, 20, 0.92);
+  border: 1.5px solid #555;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  min-width: 72px;
+  line-height: 1.2;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 2;
+}
+
+.mobile-nameplate.active {
+  border-color: rgba(193, 40, 51, 0.7);
+  box-shadow: 0 0 12px rgba(193, 40, 51, 0.7);
+}
+
+.mobile-nameplate .m-name {
+  font-size: 16px;
+  color: white;
+}
+
+.mobile-nameplate .m-chips {
+  font-size: 18px;
+  color: #73ea9f;
+  font-weight: 700;
+}
+
+/* ── Bet indicator ── */
+.mobile-bet-indicator {
+  position: absolute;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.bet-amount {
+  font-family: 'Chinese Rocks';
+  font-size: 13px;
+  color: orange;
+  font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+  line-height: 1;
+}
+
+.chip-pile {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.chip-in-pile {
+  position: absolute;
+  left: calc(50% - 18px + var(--pile-x, 0px));
+  top: calc(50% - 18px + var(--pile-y, 0px));
+  transform: rotate(var(--pile-r, 0deg));
+}
+
+/* ── Deal animation ── */
+@keyframes card-deal-1 {
+  0%   { opacity: 0; transform: translate(35vw, -40vh) rotate(20deg); }
+  45%  { opacity: 1; }
+  70%  { transform: rotate(-10deg) translateY(6px); }
+  87%  { transform: rotate(-5deg) translateY(-3px); }
+  100% { transform: rotate(-6deg); }
+}
+
+@keyframes card-deal-2 {
+  0%   { opacity: 0; transform: translate(35vw, -40vh) rotate(20deg); }
+  45%  { opacity: 1; }
+  70%  { transform: rotate(10deg) translateY(6px); }
+  87%  { transform: rotate(5deg) translateY(-3px); }
+  100% { transform: rotate(6deg); }
+}
+
+@keyframes card-deal-table {
+  0%   { opacity: 0; transform: translate(15vw, -20vh) rotate(15deg); }
+  45%  { opacity: 1; }
+  72%  { transform: rotate(-4deg) translateY(5px); }
+  88%  { transform: rotate(2deg) translateY(-2px); }
+  100% { transform: none; }
+}
+
+.table-card-dealing {
+  animation: card-deal-table 0.55s ease-out both;
+  animation-delay: var(--table-card-delay, 0s);
+}
+
+.mobile-card-wrapper.dealing .card:first-child {
+  animation: card-deal-1 0.55s ease-out both;
+  animation-delay: var(--card1-delay, 0s);
+}
+
+.mobile-card-wrapper.dealing .card:last-child {
+  animation: card-deal-2 0.55s ease-out both;
+  animation-delay: var(--card2-delay, 0s);
+}
+
+/* ── Cards — skewed under nameplate, click to expand ── */
+.mobile-card-wrapper {
+  display: flex;
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translate(-50%, -100%);
+}
+
+.mobile-card-wrapper .card {
+  width: 50px;
+  transition: all 100ms ease-in;
+  transform-origin: bottom center;
+}
+
+.mobile-card-wrapper .card:first-child {
+  transform: rotate(-6deg);
+  z-index: 1;
+}
+
+.mobile-card-wrapper .card:last-child {
+  transform: rotate(6deg);
+  margin-left: -24px;
+  z-index: 2;
+}
+
+/* Expanded state (click to toggle) */
+.mobile-seat.expanded .mobile-card-wrapper .card {
+  width: 120px;
+  z-index: 10;
+}
+
+.mobile-seat.expanded .mobile-card-wrapper .card:last-child {
+  margin-left: -10px;
+}
+
+/* ── Pins ── */
+.pin-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  justify-content: center;
+}
+
+.mobile-seat .pin {
+  position: static;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  font-size: 14px;
+  padding: 1px 6px;
+}
+
+/* ── Back button ── */
+.back-btn {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: 'Chinese Rocks';
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  z-index: 100;
+  transition: color 150ms;
+}
+
+.back-btn:hover {
+  color: white;
+}
+
+/* ── Action panel ── */
+.mobile-actions {
+  height: 80px;
+  background-color: #1c1c1c;
+  border-top: 2px solid #333;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  box-sizing: border-box;
+}
+
+.mobile-full-btn {
+  font-size: 20px;
+}
+
+.mobile-raise-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+
+
+.raise-arrow-btn {
+  background: #2e2e2e;
+  border: 2px solid #555;
+  border-radius: 8px;
+  color: white;
+  font-size: 20px;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 150ms;
+}
+
+.raise-arrow-btn:hover {
+  border-color: #999;
+}
+
+/* ── Raise modal ── */
+.raise-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+}
+
+.raise-modal {
+  background: #1c1c1c;
+  border: 2px solid #333;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 24px 36px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.raise-modal-label {
+  color: #888;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
+  font-family: 'Chinese Rocks';
+}
+
+.raise-modal-value {
+  font-size: 52px;
+  font-weight: 800;
+  color: #73ea9f;
+  margin: 0;
+  font-family: 'Chinese Rocks';
+}
+
+.raise-modal-stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.raise-stepper-btn {
+  background: #2e2e2e;
+  border: 2px solid #555;
+  border-radius: 8px;
+  color: white;
+  font-size: 26px;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: border-color 150ms;
+}
+
+.raise-stepper-btn:active {
+  background: #3e3e3e;
+}
+
+.raise-slider {
+  flex: 1;
+  accent-color: #73ea9f;
+  height: 6px;
+  cursor: pointer;
+}
+
+.mobile-action-buttons {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+
+.mobile-action-buttons .btn {
+  font-size: 16px;
+  margin-bottom: 0;
+}
+
+/* ── Victory chip overlay ── */
+.victory-chip {
+  position: fixed;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d93a48, #8b0000);
+  border: 3px solid #f0c040;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  z-index: 999;
+  animation: victory-fly 0.65s ease-in forwards;
+  animation-delay: var(--v-delay, 0s);
+  opacity: 0;
+}
+
+.victory-chip::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(240, 192, 64, 0.55);
+  pointer-events: none;
+}
+
+@keyframes victory-fly {
+  0%   { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  65%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--v-dx), var(--v-dy)) rotate(25deg); }
+}

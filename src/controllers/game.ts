@@ -12,9 +12,8 @@ type CardCompare = {
 type HandRanking = {
   highestHand: string;
   player: Player;
-  relevantCardsSimpler: number[];
-  kickerCards: number[],
   allCards: Card[],
+  relevantCardValues: number[],
 }
 
 // Global Game State.
@@ -119,6 +118,7 @@ const getHandRanking = (player: Player, tableCards: Card[]) => {
       cardsByValue.set(card.number, { count: 1, cards: [card] });
     }
   });
+  const cardValues:number[] = allCards.map(card => card.getValue());
 
 
   // key: string (each suit)
@@ -146,43 +146,34 @@ const getHandRanking = (player: Player, tableCards: Card[]) => {
 
   if (twoOfAKind(cardsByValue).length > 0) {
     highestHand = 'pair';
-    // relevantCards = twoOfAKind(cardsByValue);
-    relevantCardsSimpler = twoOfAKind(cardsByValue);
+    relevantCardsSimpler = twoOfAKind(cardsByValue).flat();
   };
   if (twoOfAKind(cardsByValue).length > 1) {
     highestHand = 'twoPair';
-    // relevantCards = twoOfAKind(cardsByValue);
-    relevantCardsSimpler = twoOfAKind(cardsByValue);
+    relevantCardsSimpler = twoOfAKind(cardsByValue).flat();
   }
   if (threeOfAKind(cardsByValue).length > 0) {
     highestHand = 'threeOfAKind';
-    // relevantCards = threeOfAKind(cardsByValue);
     relevantCardsSimpler = threeOfAKind(cardsByValue);
   }
   if (straight(allCards).length >= 5) {
     highestHand = 'straight';
-    // relevantCards = straight(allCards);
     relevantCardsSimpler = straight(allCards);
   }
   if (flush(cardsBySuit).length > 0) {
     highestHand = 'flush';
-    // relevantCards = flush(cardsBySuit);
     relevantCardsSimpler = flush(cardsBySuit);
   }
   if (threeOfAKind(cardsByValue).length > 0 && twoOfAKind(cardsByValue).length > 0) {
     highestHand = 'fullHouse';
-    // relevantCards = [...threeOfAKind(cardsByValue), ...twoOfAKind(cardsByValue)];
-    relevantCardsSimpler = [...threeOfAKind(cardsByValue), ...twoOfAKind(cardsByValue)];
+    relevantCardsSimpler = [...threeOfAKind(cardsByValue), ...twoOfAKind(cardsByValue).flat()];
   }
   if (fourOfAKind(cardsByValue).length > 0) {
     highestHand = 'fourOfAKind';
-    // relevantCards = fourOfAKind(cardsByValue);
     relevantCardsSimpler = fourOfAKind(cardsByValue);
   }
   if (straight(allCards).length >= 5 && flush(cardsBySuit).length > 0) {
     highestHand = 'straightFlush';
-    // relevantCards = [...straight(allCards), ...flush(cardsBySuit)];
-    // relevantCardsSimpler = [...straight(allCards), ...flush(cardsBySuit)];
     relevantCardsSimpler = straight(allCards);
     
     if (
@@ -196,74 +187,92 @@ const getHandRanking = (player: Player, tableCards: Card[]) => {
     }
   }
   
-  const cardValues:number[] = allCards.map(card => card.getValue());
-  const kickerCards = cardValues.filter(card => !relevantCardsSimpler.includes(card));
+  const singleCards = cardValues.filter(card => !relevantCardsSimpler.includes(card));
+  const relevantCardValues = [...relevantCardsSimpler, ...singleCards].slice(0, 5);
   
-  return { highestHand, player, relevantCardsSimpler, allCards, kickerCards };
+  return { highestHand, player, allCards, relevantCardValues };
 }
 
 
-const contestHands = (highestPlayers: HandRanking[]) => {
-  console.log('🚀 ~ contestHands ~ highestPlayers:', highestPlayers);
-  const highestHand = highestPlayers[0].highestHand;
-  let winners = [...highestPlayers];
-
-  if (highestHand === 'highCard') {
-    for (let i = 0; i < 5; i++) {
-      const maxValue = Math.max(...highestPlayers.map(player => player.relevantCardsSimpler[i]));
-      winners = winners.filter(player => player.relevantCardsSimpler[i] === maxValue);
+const compareSortedArrays = (arr1: number[], arr2: number[]) => {
+  if (!arr2) return arr1;
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] > arr2[i]) {
+      return -1;
+    }
+    if (arr2[i] > arr1[i]) {
+      return 1;
     }
   }
+  return 0
+}
 
-  if (highestHand === 'pair' || highestHand === 'twoPair' || highestHand === 'threeOfAKind' || highestHand === 'fullHouse' || highestHand === 'fourOfAKind') {
-    let relevantIndex = 0;
-    let kickerIndex = 0;
-    for (let i = 0; i < 5 && winners.length !== 1; i++) {
-      if (relevantIndex < winners[0].relevantCardsSimpler.length) {
-        const maxValue = Math.max(...winners.map(player => player.relevantCardsSimpler[relevantIndex]));
-        winners = winners.filter(player => player.relevantCardsSimpler[relevantIndex] === maxValue);
-        relevantIndex++;        
-        
-        // account for how many cards would be in these hands, minus the index++ at the end of the function
-        if (highestHand === 'pair'|| highestHand === 'twoPair') {
-          i += 1;
-        }
-        if (highestHand === 'threeOfAKind') {
-          i += 2;
-        }
-        if (highestHand === 'fourOfAKind') {
-          i += 3;
-        }
+function arraysEqual(a: number[], b: number[]): boolean {                                          
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+type nestedHandRanking = (HandRanking | HandRanking[])[];
+
+function combineDuplicateHands(players: HandRanking[]): nestedHandRanking {
+  const playersCombined: nestedHandRanking = [];
+  if (players.length <= 1) {
+    return players;
+  }
+  for (let i = 0; i < players.length; i++) {
+    if (i === 0) {
+      continue;
+    }
+    
+    const currentPlayer = players[i];
+    const prevPlayer = players[i - 1];
+    if (arraysEqual(currentPlayer.relevantCardValues, prevPlayer.relevantCardValues)) {
+      // check if prevPlayer is alread in group
+      if (Array.isArray(playersCombined[playersCombined.length - 1])) {
+        playersCombined[playersCombined.length - 1] = [...playersCombined[playersCombined.length - 1] as HandRanking[], currentPlayer];
+        // playersCombined.push([prevPlayer, currentPlayer]);
       } else {
-        const maxValue = Math.max(...winners.map(player => player.kickerCards[kickerIndex]));
-        winners = winners.filter(player => player.kickerCards[kickerIndex] === maxValue);
-        kickerIndex++;
+        playersCombined.push([prevPlayer, currentPlayer]);
       }
+      // else puch players into 
+    } else {
+      playersCombined.push(currentPlayer);
     }
   }
+  return playersCombined;
+}
 
-  // flush is accidentally taking non suited card into account for contest
-
-  if (highestHand === 'straight') {
-    const maxValue = Math.max(...winners.map(player => player.relevantCardsSimpler[0]));
-    winners = winners.filter(player => player.relevantCardsSimpler[0] === maxValue);
-  }
-
-  if (highestHand === 'flush' || highestHand === 'straightFlush') {
-    console.log('flush', winners);
-    for (let i:number = 0; i < 5 && winners.length !== 1; i++) {
-      // console.log('testing', ...winners.map(player => player.relevantCardsSimpler[i]));
-      const maxValue = Math.max(...winners.map(player => player.relevantCardsSimpler[i]));
-      console.log('🚀 ~ contestHands ~ maxValue:', maxValue);
-      winners = winners.filter(player => player.relevantCardsSimpler[i] === maxValue);
-      console.log('🚀 ~ contestHands ~ winners:', winners);
+const contestHands = (highestPlayers: HandRanking[]) => {
+  const highestPlayersMap = new Map();
+  highestPlayers.forEach(player => {
+    const hand = player.highestHand;
+    if (highestPlayersMap.has(hand)) {
+      highestPlayersMap.set(hand, [...highestPlayersMap.get(hand), player])
+    } else {
+      highestPlayersMap.set(hand, [player]);
     }
+  });
+
+  const playersOrder: HandRanking[] = [];
+  for (const key of highestPlayersMap.keys()) {
+    const handPlayers = highestPlayersMap.get(key);
+    handPlayers.sort((a:HandRanking, b:HandRanking) => {
+      return compareSortedArrays(a.relevantCardValues, b.relevantCardValues);
+    });
+    
+    playersOrder.push(...handPlayers)
   }
 
-  if (highestHand === 'royalFlush') {
-    return winners;
-  }
-  return winners;
+  // check for identicals
+  const combinedPlayersHands = combineDuplicateHands(playersOrder);
+  
+  const combinedPlayers = combinedPlayersHands.map(item => {
+    if (Array.isArray(item)) {
+      return item.map(nestedItem => nestedItem.player);
+    }
+    return item.player;
+  })
+
+  return combinedPlayers;
 }
 
 
