@@ -85,3 +85,57 @@
   font-size: 24px;
   margin: 0;
 }
+
+/* ── Character Select ── */
+.char-select {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.char-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #2a2a2a;
+  border: 2px solid #444;
+  border-radius: 12px;
+  padding: 10px 6px;
+  cursor: pointer;
+  transition: border-color 150ms, background 150ms, opacity 150ms;
+}
+
+.char-card:hover:not(:disabled):not(.selected) {
+  border-color: #888;
+  background: #333;
+}
+
+.char-card.selected {
+  border-color: #73ea9f;
+  background: #1a3a28;
+}
+
+.char-card.taken {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.char-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.char-name {
+  font-family: 'Chinese Rocks';
+  font-size: 11px;
+  color: #ccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
