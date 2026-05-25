@@ -14,6 +14,7 @@ const JoinGame = () => {
 
   return (
     <div className="lobby-wrapper">
+      <button className="back-btn" onClick={() => navigate('/')}>← Leave</button>
       <div className="lobby-card">
         <h1 className="lobby-title">Join Game</h1>
 

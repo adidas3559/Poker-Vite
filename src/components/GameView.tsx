@@ -41,6 +41,7 @@ const GameView = () => {
   const [dealingTableFrom, setDealingTableFrom] = useState<number | null>(null);
   const [victoryChips, setVictoryChips] = useState<VictoryChip[]>([]);
   const [hiddenBetIndices, setHiddenBetIndices] = useState<number[]>([]);
+  const [displayedDealerIndex, setDisplayedDealerIndex] = useState(0);
   const prevTableCardCount = useRef(0);
   const gameRef = useRef<GameState>(initGame());
   const nameplateRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -67,9 +68,13 @@ const GameView = () => {
       setRaiseInput(gameState.bigBlind);
       setIsDealing(true);
       setRoundKey(k => k + 1);
+      setHiddenBetIndices([]);
+      setDisplayedDealerIndex(gameState.dealerIndex);
     });
 
     activeSocket.on('gameUpdated', ({ gameState }: { gameState: GameState }) => {
+      console.log('🚀 ~ gameUpdated ~ gameState:', gameState);
+      
       // Capture chip pile positions before React can unmount them
       if (gameState.phase === 'end' && gameState.winners.length > 0 && gameRef.current.phase !== 'end') {
         const mainWinner = Array.isArray(gameState.winners[0])
@@ -116,7 +121,6 @@ const GameView = () => {
             setVictoryChips(chips);
             setTimeout(() => {
               setVictoryChips([]);
-              setHiddenBetIndices([]);
             }, 1600);
           }
         }
@@ -175,12 +179,13 @@ const GameView = () => {
   const numDealt = players.filter(p => p.status !== 'busted').length;
   const isMyTurn = myIndex !== -1 && myIndex === currentPlayerIndex;
   const isAllIn = isMyTurn && players[myIndex]?.chips === 0 && players[myIndex]?.status !== 'busted' && players[myIndex]?.status !== 'folded';
+  console.log('🚀 ~ GameView ~ isAllIn:', isAllIn);
 
   useEffect(() => {
-    if (!isAllIn) return;
+    if (!isAllIn || !isMyTurn) return;
     const timeout = setTimeout(() => handleCheck(), 1000);
     return () => clearTimeout(timeout);
-  }, [isAllIn]);
+  }, [isMyTurn, phase]);
 
   useEffect(() => {
     if (!isDealing) return;
@@ -278,6 +283,7 @@ const GameView = () => {
           return (
             <div
               className={`mobile-seat mobile-seat-${relativeSeat(index)}${isFolded ? ' folded' : ''}${isExpanded ? ' expanded' : ''}`}
+              style={isMe ? { zIndex: 20 } : undefined}
               key={index}
               onClick={() => isMe && player.hand.length > 0 && toggleExpand(index)}
             >
@@ -337,11 +343,11 @@ const GameView = () => {
               </div>
 
               <div className="pin-wrapper">
-                {index === dealerIndex && <span className="pin dealer">D</span>}
-                {howManyActivePlayers(players) === 2 && index === dealerIndex && <span className="pin smallBlind">SB</span>}
-                {howManyActivePlayers(players) === 2 && index === getNextActivePlayer(dealerIndex) && <span className="pin bigBlind">BB</span>}
-                {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(dealerIndex) && <span className="pin smallBlind">SB</span>}
-                {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(getNextActivePlayer(dealerIndex)) && <span className="pin bigBlind">BB</span>}
+                {index === displayedDealerIndex && <span className="pin dealer">D</span>}
+                {howManyActivePlayers(players) === 2 && index === displayedDealerIndex && <span className="pin smallBlind">SB</span>}
+                {howManyActivePlayers(players) === 2 && index === getNextActivePlayer(displayedDealerIndex) && <span className="pin bigBlind">BB</span>}
+                {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(displayedDealerIndex) && <span className="pin smallBlind">SB</span>}
+                {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(getNextActivePlayer(displayedDealerIndex)) && <span className="pin bigBlind">BB</span>}
               </div>
             </div>
           );
