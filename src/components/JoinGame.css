@@ -1,21 +1,22 @@
 .lobby-wrapper {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  min-height: 100vh;
   background-color: #fff4bd;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
 }
 
 .lobby-card {
-  background-color: #1c1c1c;
-  border-radius: 12px;
-  padding: 40px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  min-width: 340px;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
 }
 
 .lobby-title {

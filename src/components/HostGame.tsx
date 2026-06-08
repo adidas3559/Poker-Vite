@@ -4,7 +4,7 @@ import './HostGame.css';
 
 const HostGame = () => {
   const [roomName, setRoomName] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(sessionStorage.getItem('poker_nickname') ?? '');
   const navigate = useNavigate();
 
   const handleCreate = () => {

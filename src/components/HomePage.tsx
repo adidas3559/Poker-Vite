@@ -34,7 +34,7 @@ const HomePage = () => {
       <div className="home-bar-bottom" />
 
       <div className="home-content">
-        <h1 className="home-title">Red Read Royal</h1>
+        <h1 className="home-title">Red Dead Royal</h1>
         <Link className='btn' to="/join-game">Join Game</Link>
         <Link className='btn' to="/host-game">Host Game</Link>
         {/* <Link className='btn' to="/test-game">Test Game</Link>

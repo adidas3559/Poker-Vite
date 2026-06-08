@@ -39,7 +39,7 @@
   align-items: center;
   cursor: pointer;
   gap: 10px;
-  z-index: 5;
+  z-index: 7;
 }
 .mobile-center-info.expanded {
   z-index: 11;
@@ -107,6 +107,41 @@
   opacity: 0.45;
 }
 
+.mobile-seat.disconnected .mobile-nameplate {
+  border-color: #f87171;
+  opacity: 0.6;
+}
+
+/* ── Disconnect toasts ── */
+.disconnect-toasts {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.disconnect-toast {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  font-family: 'Chinese Rocks';
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  white-space: nowrap;
+  animation: toast-in 0.2s ease-out;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Seat positions — clockwise from user (bottom) */
 .mobile-seat-1 {
   bottom: 2%;
@@ -136,39 +171,55 @@
   bottom: 22%;
   right: 2%;
 }
-.mobile-seat-1 .mobile-bet-indicator {
-  top: -150px;
-  right: 50%;
-  transform: translateX(50%);
+.chips-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.chips-layer .mobile-bet-indicator {
+  position: absolute;
+  right: auto;
+}
+
+.chips-layer .chip-for-seat-1 {
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
   --chip-dx: 0px;
   --chip-dy: 50px;
 }
-.mobile-seat-2 .mobile-bet-indicator {
-  transform: translate(120%, 10px);
+.chips-layer .chip-for-seat-2 {
+  bottom: 32%;
+  left: 14%;
   --chip-dx: -40px;
   --chip-dy: 20px;
 }
-.mobile-seat-3 .mobile-bet-indicator {
-  transform: translate(120%, 10px);
-  --chip-dx: -40px;
+.chips-layer .chip-for-seat-3 {
+  top: 38%;
+  left: 22%;
+  transform: translateY(-50%);
+  --chip-dx: -50px;
   --chip-dy: 0px;
 }
-.mobile-seat-4 .mobile-bet-indicator {
-  transform: translate(-120%, 10px);
+.chips-layer .chip-for-seat-4 {
+  top: 26%;
+  left: 50%;
+  transform: translateX(-50%);
   --chip-dx: 0px;
-  --chip-dy: -40px;
+  --chip-dy: -50px;
 }
-.mobile-seat-5 .mobile-bet-indicator {
-  left: 0;
-  right: inherit;
-  transform: translate(-120%, 10px);
-  --chip-dx: 40px;
+.chips-layer .chip-for-seat-5 {
+  top: 38%;
+  right: 22%;
+  transform: translateY(-50%);
+  --chip-dx: 50px;
   --chip-dy: 0px;
 }
-.mobile-seat-6 .mobile-bet-indicator {
-  transform: translate(-120%, 10px);
-  left: 0;
-  right: inherit;
+.chips-layer .chip-for-seat-6 {
+  bottom: 32%;
+  right: 14%;
   --chip-dx: 40px;
   --chip-dy: 20px;
 }
@@ -178,10 +229,9 @@
   position: relative;
 }
 .mobile-nameplate {
-  background-color: rgba(20, 20, 20, 0.92);
-  border: 1.5px solid #555;
-  border-radius: 8px;
-  padding: 8px 10px;
+  background-color: transparent;
+  border: none;
+  padding: 4px;
   text-align: center;
   min-width: 72px;
   line-height: 1.2;
@@ -191,9 +241,31 @@
   z-index: 25;
 }
 
-.mobile-nameplate.active {
+.nameplate-char {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nameplate-char-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1.5px solid transparent;
+}
+
+.nameplate-char-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.mobile-nameplate.active .nameplate-char-img {
   border-color: rgba(193, 40, 51, 0.7);
-  box-shadow: 0 0 12px rgba(193, 40, 51, 0.7);
+  box-shadow: 0 0 12px rgba(242, 242, 242, 0.7);
 }
 
 .mobile-nameplate .m-name {
@@ -209,13 +281,10 @@
 
 /* ── Bet indicator ── */
 .mobile-bet-indicator {
-  position: absolute;
-  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  z-index: 5;
 }
 
 .bet-amount {

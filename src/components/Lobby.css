@@ -25,6 +25,8 @@
   justify-content: center;
   gap: 24px;
   background: #111;
+  padding: 24px 16px;
+  box-sizing: border-box;
 }
 
 .lobby-title {
@@ -34,14 +36,12 @@
 }
 
 .lobby-card {
-  background: #1c1c1c;
-  border: 2px solid #333;
-  border-radius: 16px;
-  padding: 40px 56px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-width: 320px;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
 }
 
 .lobby-option {
@@ -81,6 +81,49 @@
   margin: 4px 0;
 }
 
+.lobby-error {
+  color: #f87171;
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
+.lobby-players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.lobby-players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.lobby-player-chip {
+  font-family: 'Chinese Rocks';
+  font-size: 13px;
+  color: #ccc;
+  border-radius: 8px;
+  padding: 6px 8px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lobby-player-chip.disconnected {
+  opacity: 0.45;
+  color: #f87171;
+}
+
+.lobby-player-disconnected {
+  opacity: 0.45;
+  color: #f87171;
+}
+
 .lobby-start-btn {
   font-size: 24px;
   margin: 0;
@@ -91,12 +134,14 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
 }
 
 .char-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 10px;
+  width: 100%;
 }
 
 .char-card {
@@ -104,32 +149,41 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  background: #2a2a2a;
-  border: 2px solid #444;
   border-radius: 12px;
   padding: 10px 6px;
   cursor: pointer;
   transition: border-color 150ms, background 150ms, opacity 150ms;
+  background: none;
+  border: none;
+  max-width: 72px;
+  margin: 0 auto;
 }
 
-.char-card:hover:not(:disabled):not(.selected) {
-  border-color: #888;
-  background: #333;
-}
-
-.char-card.selected {
-  border-color: #73ea9f;
-  background: #1a3a28;
-}
-
-.char-card.taken {
-  opacity: 0.35;
+.char-card.taken > .char-img-wrapper > .char-img {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.char-emoji {
-  font-size: 28px;
-  line-height: 1;
+.char-img-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+
+.char-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.char-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .char-name {

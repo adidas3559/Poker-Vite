@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './JoinGame.css';
 
 const JoinGame = () => {
+  const { state } = useLocation();
   const [roomCode, setRoomCode] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(sessionStorage.getItem('poker_nickname') ?? '');
+  const [error, setError] = useState<string | null>((state as { error?: string })?.error ?? null);
   const navigate = useNavigate();
 
   const handleJoin = () => {
@@ -23,7 +25,7 @@ const JoinGame = () => {
           type="text"
           placeholder="Room code"
           value={roomCode}
-          onChange={(e) => setRoomCode(e.target.value)}
+          onChange={(e) => { setRoomCode(e.target.value); setError(null); }}
         />
 
         <input
@@ -31,8 +33,10 @@ const JoinGame = () => {
           type="text"
           placeholder="Nickname"
           value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
+          onChange={(e) => { setNickname(e.target.value); setError(null); }}
         />
+
+        {error && <p className="lobby-error">{error}</p>}
 
         <button
           className="btn"

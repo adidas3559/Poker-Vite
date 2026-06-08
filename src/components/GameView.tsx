@@ -10,6 +10,7 @@ import type { GameState, PlayerState } from '../types/GameState';
 import WinnerPopup from './WinnerPopup';
 import Chip from './Chip';
 import { SocketContext } from '../contexts/SocketContext';
+import { getCharacterById } from '../data/characters';
 
 const CHIP_OFFSETS = [
   { x: 0,   y: 0,   r: 0  },
@@ -28,7 +29,7 @@ const GameView = () => {
   const { socket, connect } = useContext(SocketContext);
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { roomCode: stateRoomCode, playerId: statePlayerId, isHost } = (state ?? {}) as { roomCode?: string; playerId?: string; isHost?: boolean };
+  const { roomCode: stateRoomCode, playerId: statePlayerId, isHost, players: statePlayers } = (state ?? {}) as { roomCode?: string; playerId?: string; isHost?: boolean; players?: { id: string; characterId?: string }[] };
   const roomCode = stateRoomCode ?? sessionStorage.getItem('poker_roomCode') ?? '';
   const myPlayerId = statePlayerId ?? sessionStorage.getItem('poker_playerId') ?? '';
   void isHost;
@@ -42,6 +43,14 @@ const GameView = () => {
   const [victoryChips, setVictoryChips] = useState<VictoryChip[]>([]);
   const [hiddenBetIndices, setHiddenBetIndices] = useState<number[]>([]);
   const [displayedDealerIndex, setDisplayedDealerIndex] = useState(0);
+  const [characterMap, setCharacterMap] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    statePlayers?.forEach(p => { if (p.characterId) map[p.id] = p.characterId; });
+    return map;
+  });
+  const [disconnectedPlayerIds, setDisconnectedPlayerIds] = useState<Set<string>>(new Set());
+  const [disconnectToasts, setDisconnectToasts] = useState<{ id: number; message: string }[]>([]);
+  const toastCounterRef = useRef(0);
   const prevTableCardCount = useRef(0);
   const gameRef = useRef<GameState>(initGame());
   const nameplateRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -54,7 +63,7 @@ const GameView = () => {
   useEffect(() => {
     const activeSocket = socket ?? connect();
 
-    activeSocket.emit('initGame', { roomCode });
+    activeSocket.emit('initGame', { roomCode, playerId: myPlayerId });
 
     activeSocket.on('gameInitialized', ({ gameState }: { gameState: GameState }) => {
       gameRef.current = gameState;
@@ -130,14 +139,34 @@ const GameView = () => {
       setGame(gameState);
     });
 
+    activeSocket.on('lobbyUpdated', ({ room }: { room: { players: { id: string; nickname: string; disconnected?: boolean; characterId?: string }[] } }) => {
+      const charMap: Record<string, string> = {};
+      room.players.forEach(p => { if (p.characterId) charMap[p.id] = p.characterId; });
+      setCharacterMap(charMap);
+
+      setDisconnectedPlayerIds(prev => {
+        const next = new Set(room.players.filter(p => p.disconnected).map(p => p.id));
+        room.players.forEach(p => {
+          if (p.disconnected && !prev.has(p.id)) {
+            const toastId = ++toastCounterRef.current;
+            setDisconnectToasts(t => [...(t ?? []), { id: toastId, message: `${p.nickname} disconnected` }]);
+            setTimeout(() => setDisconnectToasts(t => (t ?? []).filter(x => x.id !== toastId)), 4000);
+          }
+        });
+        return next;
+      });
+    });
+
     return () => {
       activeSocket.off('gameInitialized');
       activeSocket.off('roundStarted');
       activeSocket.off('gameUpdated');
+      activeSocket.off('lobbyUpdated');
     };
   }, [socket, roomCode, connect]);
 
   const handleDisconnect = () => {
+    // if (!window.confirm('Are you sure you want to leave the game?')) return;
     const playerId = sessionStorage.getItem('poker_playerId') ?? '';
     socket?.emit('leaveRoom', { roomCode, playerId });
     navigate('/');
@@ -228,21 +257,28 @@ const GameView = () => {
           <p className="raise-modal-label">Raise Amount</p>
           <p className="raise-modal-value">{raiseInput.toLocaleString()}</p>
           <div className="raise-modal-stepper">
-            <button className="raise-stepper-btn" onClick={() => setRaiseInput(v => Math.max(bigBlind, v - 1))}>−</button>
+            <button className="raise-stepper-btn" onClick={() => setRaiseInput(v => Math.max(bigBlind, v - 2))}>−</button>
             <input
               className="raise-slider"
               type="range"
               min={bigBlind}
               max={myChips}
+              step={2}
               value={raiseInput}
               onChange={e => setRaiseInput(parseInt(e.target.value))}
             />
-            <button className="raise-stepper-btn" onClick={() => setRaiseInput(v => Math.min(myChips, v + 1))}>+</button>
+            <button className="raise-stepper-btn" onClick={() => setRaiseInput(v => Math.min(myChips, v + 2))}>+</button>
           </div>
           <button className="btn" onClick={() => setShowRaiseModal(false)}>Done</button>
         </div>
       </div>
     )}
+    <div className="disconnect-toasts">
+      {disconnectToasts.map(toast => (
+        <div key={toast.id} className="disconnect-toast">{toast.message}</div>
+      ))}
+    </div>
+
     <div className="mobile-wrapper">
 
       <div className="mobile-table-area">
@@ -275,14 +311,15 @@ const GameView = () => {
 
         {players.map((player, index) => {
           if (player.status === 'busted') return null;
-          const isActive   = index === currentPlayerIndex;
-          const isFolded   = player.status === 'folded';
-          const isMe       = index === myIndex;
-          const isExpanded = expandedSeat === index;
+          const isActive       = index === currentPlayerIndex;
+          const isFolded       = player.status === 'folded';
+          const isMe           = index === myIndex;
+          const isExpanded     = expandedSeat === index;
+          const isDisconnected = disconnectedPlayerIds.has(player.id);
 
           return (
             <div
-              className={`mobile-seat mobile-seat-${relativeSeat(index)}${isFolded ? ' folded' : ''}${isExpanded ? ' expanded' : ''}`}
+              className={`mobile-seat mobile-seat-${relativeSeat(index)}${isFolded ? ' folded' : ''}${isExpanded ? ' expanded' : ''}${isDisconnected ? ' disconnected' : ''}`}
               style={isMe ? { zIndex: 20 } : undefined}
               key={index}
               onClick={() => isMe && player.hand.length > 0 && toggleExpand(index)}
@@ -292,39 +329,26 @@ const GameView = () => {
                   className={`mobile-nameplate${isActive ? ' active' : ''}`}
                   ref={el => { nameplateRefs.current[index] = el; }}
                 >
-                  <span className="m-name">{player.name}</span>
-                  <span className="m-chips">{player.chips.toLocaleString()}</span>
+                  {(() => {
+                    const charId = characterMap[player.id];
+                    const char = charId ? getCharacterById(charId) : undefined;
+                    return char ? (
+                      <div className="nameplate-char">
+                        <img className="nameplate-char-img" src={char.img} alt={char.name} />
+                        <div className="nameplate-char-info">
+                          <span className="m-name">{player.name}{isDisconnected ? ' ⚠' : ''}</span>
+                          <span className="m-chips">{player.chips.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="m-name">{player.name}{isDisconnected ? ' ⚠' : ''}</span>
+                        <span className="m-chips">{player.chips.toLocaleString()}</span>
+                      </>
+                    );
+                  })()}
                 </div>
 
-                {player.currentBet > 0 && (
-                  <div
-                    key={roundKey}
-                    className="mobile-bet-indicator"
-                    ref={el => { betIndicatorRefs.current[index] = el; }}
-                    style={hiddenBetIndices.includes(index) ? { visibility: 'hidden' } : undefined}
-                  >
-                    <span className="bet-amount">{player.currentBet.toLocaleString()}</span>
-                    <div className="chip-pile">
-                      {Array.from({ length: Math.min(8, Math.max(1, Math.ceil(player.currentBet / 2))) }).map((_, i) => {
-                        const off = CHIP_OFFSETS[i % CHIP_OFFSETS.length];
-                        return (
-                          <div
-                            key={i}
-                            className="chip-in-pile"
-                            style={{
-                              '--pile-x': `${off.x}px`,
-                              '--pile-y': `${off.y}px`,
-                              '--pile-r': `${off.r}deg`,
-                              '--chip-anim-delay': `${i * 0.08}s`,
-                            } as React.CSSProperties}
-                          >
-                            <Chip />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
 
                 {player.hand.length > 0 && (
                   <div
@@ -352,6 +376,42 @@ const GameView = () => {
             </div>
           );
         })}
+
+        {/* Chips rendered outside seat stacking contexts so z-index is relative to table */}
+        <div className="chips-layer">
+          {players.map((player, index) => {
+            if (player.status === 'busted' || player.currentBet <= 0) return null;
+            return (
+              <div
+                key={`${index}-${roundKey}`}
+                className={`mobile-bet-indicator chip-for-seat-${relativeSeat(index)}`}
+                ref={el => { betIndicatorRefs.current[index] = el; }}
+                style={hiddenBetIndices.includes(index) ? { visibility: 'hidden' } : undefined}
+              >
+                <span className="bet-amount">{player.currentBet.toLocaleString()}</span>
+                <div className="chip-pile">
+                  {Array.from({ length: Math.min(8, Math.max(1, Math.ceil(player.currentBet / 2))) }).map((_, i) => {
+                    const off = CHIP_OFFSETS[i % CHIP_OFFSETS.length];
+                    return (
+                      <div
+                        key={i}
+                        className="chip-in-pile"
+                        style={{
+                          '--pile-x': `${off.x}px`,
+                          '--pile-y': `${off.y}px`,
+                          '--pile-r': `${off.r}deg`,
+                          '--chip-anim-delay': `${i * 0.08}s`,
+                        } as React.CSSProperties}
+                      >
+                        <Chip />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mobile-actions">
