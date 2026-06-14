@@ -11,6 +11,7 @@ import WinnerPopup from './WinnerPopup';
 import Chip from './Chip';
 import { SocketContext } from '../contexts/SocketContext';
 import { getCharacterById } from '../data/characters';
+import { playEmoteSound } from '../utils/emoteSound';
 
 const CHIP_OFFSETS = [
   { x: 0,   y: 0,   r: 0  },
@@ -24,6 +25,8 @@ const CHIP_OFFSETS = [
 ];
 
 type VictoryChip = { id: number; startX: number; startY: number; endX: number; endY: number; delay: number; };
+
+const EMOTES = ['😂', '😤', '🤔', '😎', '💀', '🔥', '👑', '💸', '🎰', '🤡'];
 
 const GameView = () => {
   const { socket, connect } = useContext(SocketContext);
@@ -57,6 +60,10 @@ const GameView = () => {
   const betIndicatorRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [expandedSeat, setExpandedSeat] = useState<number | null>(0);
   const [expandedTableCards, setExpandedTableCards] = useState(false);
+  const [emotes, setEmotes] = useState<Record<string, { emoji: string; key: number }>>({});
+  const [showEmotePicker, setShowEmotePicker] = useState(false);
+  const [emoteCooldown, setEmoteCooldown] = useState(false);
+  const emoteKeyRef = useRef(0);
 
   const { players, tableCards, pot, currentBet, currentPlayerIndex, dealerIndex, phase, bigBlind } = game;
 
@@ -157,11 +164,26 @@ const GameView = () => {
       });
     });
 
+    activeSocket.on('emoteReceived', ({ playerId, emoji }: { playerId: string; emoji: string }) => {
+      const key = ++emoteKeyRef.current;
+      playEmoteSound(emoji);
+      setEmotes(prev => ({ ...prev, [playerId]: { emoji, key } }));
+      setTimeout(() => {
+        setEmotes(prev => {
+          if (prev[playerId]?.key !== key) return prev;
+          const next = { ...prev };
+          delete next[playerId];
+          return next;
+        });
+      }, 3000);
+    });
+
     return () => {
       activeSocket.off('gameInitialized');
       activeSocket.off('roundStarted');
       activeSocket.off('gameUpdated');
       activeSocket.off('lobbyUpdated');
+      activeSocket.off('emoteReceived');
     };
   }, [socket, roomCode, connect]);
 
@@ -178,6 +200,14 @@ const GameView = () => {
   const handleCheck = () => socket?.emit('check', { roomCode });
   const handleCall  = () => socket?.emit('call', { roomCode });
   const handleFold  = () => socket?.emit('fold', { roomCode });
+  const EMOTE_COOLDOWN_MS = 5000;
+  const handleEmote = (emoji: string) => {
+    if (emoteCooldown) return;
+    socket?.emit('emote', { roomCode, playerId: myPlayerId, emoji });
+    setShowEmotePicker(false);
+    setEmoteCooldown(true);
+    setTimeout(() => setEmoteCooldown(false), EMOTE_COOLDOWN_MS);
+  };
 
   const toggleExpand = (index: number) => {
     setExpandedSeat(prev => prev === index ? null : index);
@@ -324,6 +354,11 @@ const GameView = () => {
               key={index}
               onClick={() => isMe && player.hand.length > 0 && toggleExpand(index)}
             >
+              {emotes[player.id] && (
+                <div key={emotes[player.id].key} className="emote-bubble">
+                  {emotes[player.id].emoji}
+                </div>
+              )}
               <div className='mobile-nameplateWrapper'>
                 <div
                   className={`mobile-nameplate${isActive ? ' active' : ''}`}
@@ -415,6 +450,22 @@ const GameView = () => {
       </div>
 
       <div className="mobile-actions">
+        {myIndex !== -1 && (
+          <div className="emote-area">
+            <button
+              className={`emote-trigger-btn${emoteCooldown ? ' cooldown' : ''}`}
+              onClick={() => !emoteCooldown && setShowEmotePicker(p => !p)}
+            >😀</button>
+            {showEmotePicker && !emoteCooldown && (
+              <div className="emote-picker">
+                {EMOTES.map(emoji => (
+                  <button key={emoji} className="emote-btn" onClick={() => handleEmote(emoji)}>{emoji}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {(phase === 'waiting' || phase === 'end') && myIndex !== -1 && myIndex === dealerIndex && (
           <button className="btn mobile-full-btn" onClick={drawHandler}>
             {phase === 'waiting' ? 'Deal Cards' : 'Next Round'}
