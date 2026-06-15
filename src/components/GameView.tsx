@@ -4,7 +4,6 @@ import './Game.css';
 import './MobileGame.css';
 import CardFront from './CardFront';
 import CardBack from './CardBack';
-import table1 from '../assets/table1.png';
 import { initGame } from '../controllers/gameService';
 import type { GameState, PlayerState } from '../types/GameState';
 import WinnerPopup from './WinnerPopup';
@@ -32,7 +31,7 @@ const GameView = () => {
   const { socket, connect } = useContext(SocketContext);
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { roomCode: stateRoomCode, playerId: statePlayerId, isHost, players: statePlayers } = (state ?? {}) as { roomCode?: string; playerId?: string; isHost?: boolean; players?: { id: string; characterId?: string }[] };
+  const { roomCode: stateRoomCode, roomName: stateRoomName, playerId: statePlayerId, isHost, players: statePlayers } = (state ?? {}) as { roomCode?: string; roomName?: string; playerId?: string; isHost?: boolean; players?: { id: string; characterId?: string }[] };
   const roomCode = stateRoomCode ?? sessionStorage.getItem('poker_roomCode') ?? '';
   const myPlayerId = statePlayerId ?? sessionStorage.getItem('poker_playerId') ?? '';
   void isHost;
@@ -40,12 +39,14 @@ const GameView = () => {
   const [game, setGame] = useState<GameState>(initGame());
   const [raiseInput, setRaiseInput] = useState<number>(0);
   const [showRaiseModal, setShowRaiseModal] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [isDealing, setIsDealing] = useState(false);
   const [roundKey, setRoundKey] = useState(0);
   const [dealingTableFrom, setDealingTableFrom] = useState<number | null>(null);
   const [victoryChips, setVictoryChips] = useState<VictoryChip[]>([]);
   const [hiddenBetIndices, setHiddenBetIndices] = useState<number[]>([]);
   const [displayedDealerIndex, setDisplayedDealerIndex] = useState(0);
+  const [roomName, setRoomName] = useState<string>(stateRoomName ?? '');
   const [characterMap, setCharacterMap] = useState<Record<string, string>>(() => {
     const map: Record<string, string> = {};
     statePlayers?.forEach(p => { if (p.characterId) map[p.id] = p.characterId; });
@@ -58,7 +59,7 @@ const GameView = () => {
   const gameRef = useRef<GameState>(initGame());
   const nameplateRefs = useRef<(HTMLDivElement | null)[]>([]);
   const betIndicatorRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [expandedSeat, setExpandedSeat] = useState<number | null>(0);
+  const [expandedSeat, setExpandedSeat] = useState<number | null>(null);
   const [expandedTableCards, setExpandedTableCards] = useState(false);
   const [emotes, setEmotes] = useState<Record<string, { emoji: string; key: number }>>({});
   const [showEmotePicker, setShowEmotePicker] = useState(false);
@@ -71,6 +72,13 @@ const GameView = () => {
     const activeSocket = socket ?? connect();
 
     activeSocket.emit('initGame', { roomCode, playerId: myPlayerId });
+
+    // On a hard refresh / rejoin the navigation state (and its character
+    // assignments) is gone, so ask the server for the room state. The
+    // resulting 'lobbyUpdated' repopulates characterMap below.
+    if (!statePlayers || statePlayers.length === 0) {
+      activeSocket.emit('rejoinLobby', { roomCode, playerId: myPlayerId });
+    }
 
     activeSocket.on('gameInitialized', ({ gameState }: { gameState: GameState }) => {
       gameRef.current = gameState;
@@ -146,7 +154,8 @@ const GameView = () => {
       setGame(gameState);
     });
 
-    activeSocket.on('lobbyUpdated', ({ room }: { room: { players: { id: string; nickname: string; disconnected?: boolean; characterId?: string }[] } }) => {
+    activeSocket.on('lobbyUpdated', ({ room }: { room: { roomName?: string; players: { id: string; nickname: string; disconnected?: boolean; characterId?: string }[] } }) => {
+      if (room.roomName) setRoomName(room.roomName);
       const charMap: Record<string, string> = {};
       room.players.forEach(p => { if (p.characterId) charMap[p.id] = p.characterId; });
       setCharacterMap(charMap);
@@ -185,10 +194,9 @@ const GameView = () => {
       activeSocket.off('lobbyUpdated');
       activeSocket.off('emoteReceived');
     };
-  }, [socket, roomCode, connect]);
+  }, [socket, roomCode, connect, myPlayerId, statePlayers]);
 
   const handleDisconnect = () => {
-    // if (!window.confirm('Are you sure you want to leave the game?')) return;
     const playerId = sessionStorage.getItem('poker_playerId') ?? '';
     socket?.emit('leaveRoom', { roomCode, playerId });
     navigate('/');
@@ -196,7 +204,7 @@ const GameView = () => {
 
   const drawHandler = () => socket?.emit('startRound', { roomCode });
   const handleRaise = () => socket?.emit('raise', { roomCode, betAmount: raiseInput });
-  const handleAllIn = () => socket?.emit('allIn', { roomCode });
+  // const handleAllIn = () => socket?.emit('allIn', { roomCode });
   const handleCheck = () => socket?.emit('check', { roomCode });
   const handleCall  = () => socket?.emit('call', { roomCode });
   const handleFold  = () => socket?.emit('fold', { roomCode });
@@ -262,10 +270,22 @@ const GameView = () => {
     return () => clearTimeout(timeout);
   }, [tableCards.length]);
 
+  const clampRaise = (value: number) => Math.max(bigBlind, Math.min(myChips, value));
+
+  const confirmRaise = () => {
+    // if (raiseInput >= myChips) handleAllIn();
+    // else handleRaise();
+    handleRaise();
+    setShowRaiseModal(false);
+  };
+
+  const myToCall = myIndex !== -1 ? Math.max(0, currentBet - players[myIndex].currentBet) : 0;
+  const showDealBtn = (phase === 'waiting' || phase === 'end') && myIndex !== -1 && myIndex === dealerIndex;
+  const showActionBtns = inActivePhase && isMyTurn && !isAllIn;
+
   return (
     <>
-    {gameWinner && <WinnerPopup winner={gameWinner} />}
-    <button className="back-btn" onClick={handleDisconnect}>← Leave</button>
+    {gameWinner && <WinnerPopup winner={gameWinner} players={players} characterMap={characterMap} />}
 
     {victoryChips.map(chip => (
       <div
@@ -284,25 +304,47 @@ const GameView = () => {
     {showRaiseModal && (
       <div className="raise-modal-overlay" onClick={() => setShowRaiseModal(false)}>
         <div className="raise-modal" onClick={e => e.stopPropagation()}>
-          <p className="raise-modal-label">Raise Amount</p>
+          <div className="raise-handle" />
+          <p className="raise-modal-label">Raise to</p>
           <p className="raise-modal-value">{raiseInput.toLocaleString()}</p>
-          <div className="raise-modal-stepper">
-            <button className="raise-stepper-btn" onClick={() => setRaiseInput(v => Math.max(bigBlind, v - 2))}>−</button>
-            <input
-              className="raise-slider"
-              type="range"
-              min={bigBlind}
-              max={myChips}
-              step={2}
-              value={raiseInput}
-              onChange={e => setRaiseInput(parseInt(e.target.value))}
-            />
-            <button className="raise-stepper-btn" onClick={() => setRaiseInput(v => Math.min(myChips, v + 2))}>+</button>
+          <input
+            className="raise-slider"
+            type="range"
+            min={bigBlind}
+            max={myChips}
+            step={2}
+            value={raiseInput}
+            onChange={e => setRaiseInput(parseInt(e.target.value))}
+          />
+          <div className="raise-presets">
+            <button className="raise-preset" onClick={() => setRaiseInput(clampRaise(bigBlind))}>Min</button>
+            <button className="raise-preset" onClick={() => setRaiseInput(clampRaise(Math.round(pot / 2)))}>½ Pot</button>
+            <button className="raise-preset" onClick={() => setRaiseInput(clampRaise(pot))}>Pot</button>
+            <button className="raise-preset" onClick={() => setRaiseInput(myChips)}>Max</button>
           </div>
-          <button className="btn" onClick={() => setShowRaiseModal(false)}>Done</button>
+          <div className="raise-actions">
+            <button className="raise-cancel" onClick={() => setShowRaiseModal(false)}>Cancel</button>
+            <button className="raise-confirm" onClick={confirmRaise}>
+              {raiseInput >= myChips ? 'All In' : `Raise ${raiseInput.toLocaleString()}`}
+            </button>
+          </div>
         </div>
       </div>
     )}
+
+    {showLeaveConfirm && (
+      <div className="confirm-overlay" onClick={() => setShowLeaveConfirm(false)}>
+        <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+          <p className="confirm-title">Leave Table?</p>
+          <p className="confirm-text">You'll be removed from this hand and forfeit any chips in the pot.</p>
+          <div className="confirm-actions">
+            <button className="confirm-cancel" onClick={() => setShowLeaveConfirm(false)}>Stay</button>
+            <button className="confirm-leave" onClick={handleDisconnect}>Leave</button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <div className="disconnect-toasts">
       {disconnectToasts.map(toast => (
         <div key={toast.id} className="disconnect-toast">{toast.message}</div>
@@ -311,15 +353,41 @@ const GameView = () => {
 
     <div className="mobile-wrapper">
 
+      <div className="game-topbar">
+        <button className="leave-btn" onClick={() => setShowLeaveConfirm(true)}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#e9c766" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+          Leave
+        </button>
+        <div className="topbar-title">
+          <div className="table-name">{roomName || 'The Gold Spur'}</div>
+          <div className="table-sub">{roomCode ? `Room ${roomCode}` : 'Table VII'}</div>
+        </div>
+        {/* <div className="topbar-blinds">
+          <span className="blinds-label">Blinds</span>
+          <span className="blinds-value">{smallBlind} / {bigBlind}</span>
+        </div> */}
+      </div>
+
       <div className="mobile-table-area">
-        <img className="mobile-table-img" src={table1} alt="table" />
+        <div className="felt-table">
+          <div className="felt-surface">
+            <div className="felt-ring" />
+          </div>
+        </div>
 
         <div
-          className={`mobile-center-info ${expandedTableCards ? ' expanded' : ''}`}
+          className={`mobile-center-info${expandedTableCards ? ' expanded' : ''}`}
           onClick={() => tableCards.length > 0 && setExpandedTableCards(p => !p)}
         >
+          <div className="pot-pill">
+            <svg width="15" height="15" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#d5aa49" stroke="#8a6a2a" strokeWidth="2" /><text x="16" y="21" textAnchor="middle" fontFamily="Playfair Display,serif" fontWeight="900" fontSize="13" fill="#5c3f12">$</text></svg>
+            <span className="pot-amount">POT {pot.toLocaleString()}</span>
+          </div>
+          {inActivePhase && <div className="phase-label">— {phase} —</div>}
           <div className="mobile-community-cards">
-            {tableCards.map((card, i) => {
+            {Array.from({ length: 5 }).map((_, i) => {
+              const card = tableCards[i];
+              if (!card) return <div key={i} className="table-card-slot empty" />;
               const isNew = dealingTableFrom !== null && i >= dealingTableFrom;
               return (
                 <div
@@ -332,11 +400,9 @@ const GameView = () => {
               );
             })}
           </div>
-          <div className="mobile-pot-info">
-            <span className='pot'>Pot: {pot.toLocaleString()}</span>
-            <span className='phase'>{phase}</span>
-            <span className='phase'>Current Bet: {currentBet}</span>
-          </div>
+          {inActivePhase && myToCall > 0 && (
+            <div className="to-call">To call · <b>{myToCall.toLocaleString()}</b></div>
+          )}
         </div>
 
         {players.map((player, index) => {
@@ -346,44 +412,30 @@ const GameView = () => {
           const isMe           = index === myIndex;
           const isExpanded     = expandedSeat === index;
           const isDisconnected = disconnectedPlayerIds.has(player.id);
+          const charId         = characterMap[player.id];
+          const char           = charId ? getCharacterById(charId) : undefined;
 
           return (
             <div
-              className={`mobile-seat mobile-seat-${relativeSeat(index)}${isFolded ? ' folded' : ''}${isExpanded ? ' expanded' : ''}${isDisconnected ? ' disconnected' : ''}`}
-              style={isMe ? { zIndex: 20 } : undefined}
+              className={`mobile-seat mobile-seat-${relativeSeat(index)}${isActive ? ' active' : ''}${isFolded ? ' folded' : ''}${isExpanded ? ' expanded' : ''}${isDisconnected ? ' disconnected' : ''}`}
               key={index}
               onClick={() => isMe && player.hand.length > 0 && toggleExpand(index)}
             >
-              {emotes[player.id] && (
-                <div key={emotes[player.id].key} className="emote-bubble">
-                  {emotes[player.id].emoji}
-                </div>
-              )}
-              <div className='mobile-nameplateWrapper'>
+              <div className="mobile-nameplateWrapper">
+                {emotes[player.id] && (
+                  <div key={emotes[player.id].key} className="emote-bubble">
+                    {emotes[player.id].emoji}
+                  </div>
+                )}
+
                 <div
-                  className={`mobile-nameplate${isActive ? ' active' : ''}`}
+                  className="seat-avatar"
                   ref={el => { nameplateRefs.current[index] = el; }}
                 >
-                  {(() => {
-                    const charId = characterMap[player.id];
-                    const char = charId ? getCharacterById(charId) : undefined;
-                    return char ? (
-                      <div className="nameplate-char">
-                        <img className="nameplate-char-img" src={char.img} alt={char.name} />
-                        <div className="nameplate-char-info">
-                          <span className="m-name">{player.name}{isDisconnected ? ' ⚠' : ''}</span>
-                          <span className="m-chips">{player.chips.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <span className="m-name">{player.name}{isDisconnected ? ' ⚠' : ''}</span>
-                        <span className="m-chips">{player.chips.toLocaleString()}</span>
-                      </>
-                    );
-                  })()}
+                  {char
+                    ? <img src={char.img} alt={char.name} />
+                    : <div className="seat-avatar-fallback">{player.name?.[0]?.toUpperCase() ?? '?'}</div>}
                 </div>
-
 
                 {player.hand.length > 0 && (
                   <div
@@ -399,14 +451,19 @@ const GameView = () => {
                     }
                   </div>
                 )}
+
+                <div className="seat-badges">
+                  {index === displayedDealerIndex && <span className="pin dealer">D</span>}
+                  {howManyActivePlayers(players) === 2 && index === displayedDealerIndex && <span className="pin smallBlind">SB</span>}
+                  {howManyActivePlayers(players) === 2 && index === getNextActivePlayer(displayedDealerIndex) && <span className="pin bigBlind">BB</span>}
+                  {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(displayedDealerIndex) && <span className="pin smallBlind">SB</span>}
+                  {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(getNextActivePlayer(displayedDealerIndex)) && <span className="pin bigBlind">BB</span>}
+                </div>
               </div>
 
-              <div className="pin-wrapper">
-                {index === displayedDealerIndex && <span className="pin dealer">D</span>}
-                {howManyActivePlayers(players) === 2 && index === displayedDealerIndex && <span className="pin smallBlind">SB</span>}
-                {howManyActivePlayers(players) === 2 && index === getNextActivePlayer(displayedDealerIndex) && <span className="pin bigBlind">BB</span>}
-                {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(displayedDealerIndex) && <span className="pin smallBlind">SB</span>}
-                {howManyActivePlayers(players) > 2 && index === getNextActivePlayer(getNextActivePlayer(displayedDealerIndex)) && <span className="pin bigBlind">BB</span>}
+              <div className="seat-plate">
+                <span className="m-name">{player.name}{isDisconnected ? ' ⚠' : ''}</span>
+                <span className="m-chips">{player.chips.toLocaleString()}</span>
               </div>
             </div>
           );
@@ -447,53 +504,70 @@ const GameView = () => {
             );
           })}
         </div>
-      </div>
 
-      <div className="mobile-actions">
         {myIndex !== -1 && (
           <div className="emote-area">
             <button
               className={`emote-trigger-btn${emoteCooldown ? ' cooldown' : ''}`}
               onClick={() => !emoteCooldown && setShowEmotePicker(p => !p)}
-            >😀</button>
+            >
+              <span className="emote-trigger-emoji">🤠</span>
+            </button>
             {showEmotePicker && !emoteCooldown && (
               <div className="emote-picker">
-                {EMOTES.map(emoji => (
-                  <button key={emoji} className="emote-btn" onClick={() => handleEmote(emoji)}>{emoji}</button>
-                ))}
+                <div className="emote-picker-title">Send a Tell</div>
+                <div className="emote-grid">
+                  {EMOTES.map(emoji => (
+                    <button key={emoji} className="emote-btn" onClick={() => handleEmote(emoji)}>{emoji}</button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         )}
+      </div>
 
-        {(phase === 'waiting' || phase === 'end') && myIndex !== -1 && myIndex === dealerIndex && (
-          <button className="btn mobile-full-btn" onClick={drawHandler}>
-            {phase === 'waiting' ? 'Deal Cards' : 'Next Round'}
-          </button>
+      <div className="mobile-actions">
+        {showDealBtn && (
+          <div className="action-buttons">
+            <button className="action-btn raise full" onClick={drawHandler}>
+              <span className="btn-label">{phase === 'waiting' ? 'Deal Cards' : 'Next Round'}</span>
+            </button>
+          </div>
         )}
 
-        {inActivePhase && isMyTurn && !isAllIn && (
-          <>
-            <div className="mobile-action-buttons">
-              {players[currentPlayerIndex].currentBet === currentBet &&
-                <button className="btn" onClick={handleCheck}>Check</button>
-              }
-              {players[currentPlayerIndex].currentBet < currentBet &&
-                <button className="btn" onClick={handleCall}>Call</button>
-              }
-              {players[currentPlayerIndex].chips !== 0 &&
-                <button className="btn" onClick={handleAllIn}>All In</button>
-              }
-              {players[currentPlayerIndex].chips === 0 &&
-                <button className="btn" onClick={handleCheck}>Skip</button>
-              }
-              <button className="btn" onClick={handleFold}>Fold</button>
-              <button className="btn raise-btn" onClick={handleRaise}>
-                Raise {raiseInput.toLocaleString()}
+        {showActionBtns && (
+          <div className="action-buttons">
+            <button className="action-btn fold" onClick={handleFold}>
+              <span className="btn-label">Fold</span>
+            </button>
+
+            {players[currentPlayerIndex].currentBet === currentBet ? (
+              <button className="action-btn call" onClick={handleCheck}>
+                <span className="btn-label">Check</span>
               </button>
-              <button className="raise-arrow-btn" onClick={() => setShowRaiseModal(true)}>↑</button>
-            </div>
-          </>
+            ) : (
+              <button className="action-btn call" onClick={handleCall}>
+                <span className="btn-label">Call</span>
+                <span className="btn-sub">{(currentBet - players[currentPlayerIndex].currentBet).toLocaleString()}</span>
+              </button>
+            )}
+
+            <button
+              className="action-btn raise"
+              onClick={() => { setRaiseInput(prev => clampRaise(prev || bigBlind)); setShowRaiseModal(true); }}
+            >
+              <svg width="15" height="9" viewBox="0 0 24 14" fill="none" stroke="#3a2408" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l9-8 9 8" /></svg>
+              <span className="btn-label">Raise</span>
+              <span className="btn-cue">Set amount</span>
+            </button>
+          </div>
+        )}
+
+        {!showDealBtn && !showActionBtns && (
+          <div className="action-status">
+            {myIndex === -1 ? 'Spectating' : isMyTurn ? '' : 'Waiting for players…'}
+          </div>
         )}
       </div>
 

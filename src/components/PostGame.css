@@ -1,58 +1,289 @@
 .postgame-wrapper {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
-  background: #111;
+  background: radial-gradient(120% 70% at 50% 22%, #1a130a 0%, #0c0a06 52%, #070605 100%);
+  font-family: 'Inter', sans-serif;
 }
 
 .postgame-card {
-  background: #1c1c1c;
-  border: 2px solid #73ea9f;
-  border-radius: 16px;
-  padding: 56px 72px;
-  text-align: center;
+  position: relative;
+  width: 390px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Spinning gold rays behind the winner */
+.postgame-rays {
+  position: absolute;
+  left: 50%;
+  top: 200px;
+  transform: translate(-50%, -50%);
+  width: 520px;
+  height: 520px;
+  z-index: 0;
+  opacity: 0.16;
+  pointer-events: none;
+  animation: postgameRaySpin 24s linear infinite;
+}
+
+.postgame-content {
+  position: relative;
+  z-index: 2;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  box-shadow: 0 0 40px 8px rgba(115, 234, 159, 0.25);
+  padding: 48px 26px calc(26px + env(safe-area-inset-bottom, 0));
 }
 
 .postgame-label {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 3px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 5px;
+  color: #a98f63;
   text-transform: uppercase;
-  color: #7e7e7e;
+  margin-bottom: 20px;
+}
+
+.postgame-hero {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.postgame-crown {
+  position: absolute;
+  left: 50%;
+  top: -22px;
+  transform: translateX(-50%);
+}
+
+.postgame-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(160deg, #f2d98a, #bd9333);
+  animation: postgameGlow 1.9s ease-in-out infinite;
+}
+
+.postgame-avatar img,
+.postgame-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 3px solid #160d06;
+}
+
+.postgame-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 38% 30%, #3a2417, #1a0f08);
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 38px;
+  color: #e9c766;
 }
 
 .postgame-winner {
-  font-size: 52px;
-  font-weight: 800;
-  color: #73ea9f;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 48px;
+  line-height: 1;
+  color: #9DCEA2;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.55);
+  text-align: center;
   margin: 0;
 }
 
 .postgame-chips {
-  font-size: 20px;
-  font-weight: 700;
-  color: #dad400;
-}
-
-.postgame-actions {
   display: flex;
-  gap: 16px;
-  margin-top: 24px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: #f2d98a;
+  white-space: nowrap;
 }
 
-.btn-secondary {
-  background: transparent;
-  border: 2px solid #7e7e7e;
-  color: #7e7e7e;
+.postgame-chip-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #d5aa49;
+  border: 2px solid #8a6a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 11px;
+  color: #5c3f12;
 }
 
-.btn-secondary:hover {
-  border-color: #aaa;
-  color: #aaa;
+/* Final standings */
+.postgame-standings {
+  width: 100%;
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.postgame-standings-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: #a98f63;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.standings-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  background: linear-gradient(#1a130c, #100a06);
+  border: 1px solid #3a2a1a;
+}
+
+.standings-row.is-winner {
+  background: linear-gradient(#2a1d10, #1d1209);
+  border-color: #c79a3a;
+}
+
+.standings-row.is-out {
+  opacity: 0.55;
+}
+
+.standings-rank {
+  width: 24px;
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 17px;
+}
+
+.standings-avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 9px;
+  padding: 2px;
+  background: linear-gradient(160deg, #e9c766, #a87b2e);
+}
+
+.standings-row.is-out .standings-avatar {
+  background: #4a3f30;
+}
+
+.standings-avatar img,
+.standings-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  object-fit: cover;
+  display: block;
+  border: 1px solid #160d06;
+}
+
+.standings-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 38% 30%, #3a2417, #1a0f08);
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 15px;
+  color: #e9c766;
+}
+
+.standings-name {
+  flex: 1;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 16px;
+  color: #f3ead4;
+}
+
+.standings-row.is-winner .standings-name {
+  color: #f2d98a;
+}
+
+.standings-row.is-out .standings-name {
+  color: #8a7e64;
+}
+
+.standings-chips {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: #cdd3df;
+}
+
+.standings-row.is-winner .standings-chips {
+  color: #9DCEA2;
+}
+
+.standings-row.is-out .standings-chips {
+  color: #8a7e64;
+}
+
+/* Actions */
+.postgame-actions {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  gap: 11px;
+  padding-top: 22px;
+}
+
+.postgame-btn {
+  padding: 15px 0;
+  border-radius: 13px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.postgame-btn.rematch {
+  flex: 1.4;
+  border: 1px solid #c79a3a;
+  background: linear-gradient(180deg, #f2d98a, #d5aa49 55%, #bd9333);
+  color: #2a1808;
+  box-shadow: 0 5px 14px rgba(213, 170, 73, 0.4);
+}
+
+.postgame-btn.home {
+  flex: 1;
+  border: 1px solid #5b3a22;
+  background: linear-gradient(#241710, #180e07);
+  color: #e9c766;
+}
+
+.postgame-btn:active {
+  filter: brightness(1.08);
+}
+
+@keyframes postgameRaySpin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes postgameGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(213, 170, 73, 0.6), 0 6px 18px rgba(0, 0, 0, 0.5); }
+  50%      { box-shadow: 0 0 0 14px rgba(213, 170, 73, 0), 0 6px 18px rgba(0, 0, 0, 0.5); }
 }

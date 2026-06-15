@@ -1,9 +1,11 @@
 TODO
 
+check how many players before ui breaks
+in lobby, make it so all players need to ready up before start
 
 
-I had it all working before refactor but now it has general bugs like blinds getting confused after a few rounds,
-players hitting negative numbers, and maybe more
+FOUND BUG
+
 
 Fixed bug if only two left, Dealer is sb and other player is bb and that works but pin is showing other player as both.
 Fixed bug where last player wasn't putting in all in amount, removing 20 dollars from the game
@@ -13,6 +15,9 @@ Fixed bug where if two players had same cards (same array in combinedPlayers) on
 Fixed bug when Ben gets his big blind and only has 2 chips going into it, he puts in 4 and gets -2 pot
 Fixed bug where if last player raises, it moves on to next game phase
 Fixed bug where players able to raise into negative numbers!
+
+Fixed bug where if last player (at least in a 2 player duel) raises by all in, it just skips to results instead of other player getting chance to 
+call/fold. Seems to be any time all in is done right before the game phase is supposed to update. All other raises seems to work properly
 
 Fixed bug where if only two left, bug freezes game after flop check. 
 This was because nextPlayersTurn in GameLogic wasn't looping properly and was checking the original game.currentPlayerIndex over and over

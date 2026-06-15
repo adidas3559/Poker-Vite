@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './HostGame.css';
+import './JoinHost.css';
 
 const HostGame = () => {
   const [roomName, setRoomName] = useState('');
@@ -13,34 +13,60 @@ const HostGame = () => {
   };
 
   return (
-    <div className="lobby-wrapper">
-      <button className="back-btn" onClick={() => navigate('/')}>← Leave</button>
-      <div className="lobby-card">
-        <h1 className="lobby-title">Host Game</h1>
+    <div className="th-wrapper">
+      <div className="th-card">
+        <div className="th-topbar">
+          <button className="th-leave" onClick={() => navigate('/')}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Leave
+          </button>
+          <span className="th-brand">Red Dead Royal</span>
+        </div>
 
-        <input
-          className="lobby-input"
-          type="text"
-          placeholder="Room name"
-          value={roomName}
-          onChange={(e) => setRoomName(e.target.value)}
-        />
+        <div className="th-header">
+          <div className="th-emblem">&#9824;</div>
+          <div className="th-eyebrow">Deal 'Em In</div>
+          <h1 className="th-title">Host a Table</h1>
+          <div className="th-divider">
+            <span />&#9824; &#9830; &#9827;<span />
+          </div>
+        </div>
 
-        <input
-          className="lobby-input"
-          type="text"
-          placeholder="Nickname"
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-        />
+        <div className="th-field">
+          <label className="th-label">Table Name</label>
+          <input
+            className="th-input"
+            type="text"
+            placeholder="Name your table"
+            value={roomName}
+            onChange={(e) => setRoomName(e.target.value)}
+          />
+        </div>
+
+        <div className="th-field">
+          <label className="th-label">Your Name</label>
+          <input
+            className="th-input"
+            type="text"
+            placeholder="Enter your name"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+          />
+        </div>
 
         <button
-          className="btn"
+          className="th-cta"
           onClick={handleCreate}
           disabled={!roomName.trim() || !nickname.trim()}
         >
-          Create Room
+          Create Table
         </button>
+
+        <div className="th-switch" onClick={() => navigate('/join-game')}>
+          Joining a friend? <span>Enter a code</span>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SocketContext } from '../contexts/SocketContext';
+import './JoinHost.css';
 import './Lobby.css';
 import selectedCircleImg from '../assets/selectedCircle.png';
 import selectedXImg from '../assets/selectedX.png';
@@ -34,7 +35,7 @@ type RoomState = {
 }
 
 
-import { CHARACTERS } from '../data/characters';
+import { CHARACTERS, getCharacterById } from '../data/characters';
 
 const Lobby = () => {
   const { socket, connect } = useContext(SocketContext);
@@ -45,12 +46,22 @@ const Lobby = () => {
 
   const [roomCode, setRoomCode] = useState(initialRoomCode ?? sessionStorage.getItem('poker_roomCode') ?? '');
   const [roomName, setRoomName] = useState(initialRoomName ?? sessionStorage.getItem('poker_roomName') ?? '');
+  const roomNameRef = useRef(roomName);
   const [players, setPlayers] = useState<{ id?: string, nickname: string, disconnected?: boolean, characterId?: string }[]>([{ nickname }]);
   const [isHost, setIsHost] = useState(false);
+  const [hostNickname, setHostNickname] = useState('');
   const isHostRef = useRef(false);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
   const [takenCharacterIds, setTakenCharacterIds] = useState<string[]>([]);
   const [gameActive, setGameActive] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = () => {
+    if (!roomCode) return;
+    navigator.clipboard?.writeText(roomCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
 
   const handleLeave = () => {
     // if (!window.confirm('Are you sure you want to leave?')) return;
@@ -93,12 +104,14 @@ const Lobby = () => {
     activeSocket.on('lobbyUpdated', ({ room, playerId, nickname: nick }: { room: RoomState, playerId?: string, nickname?: string }) => {
       setRoomCode(room.roomCode);
       setRoomName(room.roomName);
+      roomNameRef.current = room.roomName;
       setPlayers(room.players.map(p => ({ id: p.id, nickname: p.nickname, disconnected: p.disconnected, characterId: p.characterId })));
       sessionStorage.setItem('poker_roomCode', room.roomCode);
       sessionStorage.setItem('poker_roomName', room.roomName);
       if (playerId) sessionStorage.setItem('poker_playerId', playerId);
       if (nick) sessionStorage.setItem('poker_nickname', nick);
       const currentNickname = nick ?? sessionStorage.getItem('poker_nickname') ?? '';
+      setHostNickname(room.host);
       const host = currentNickname === room.host;
       setIsHost(host);
       isHostRef.current = host;
@@ -120,7 +133,7 @@ const Lobby = () => {
     });
 
     activeSocket.on('gameStarted', ({ roomCode, playerId, players: charAssignedPlayers }: { roomCode: string, playerId: string, players: RoomState['players'] }) => {
-      navigate('/game', { state: { roomCode, playerId, isHost: isHostRef.current, players: charAssignedPlayers } });
+      navigate('/game', { state: { roomCode, roomName: roomNameRef.current, playerId, isHost: isHostRef.current, players: charAssignedPlayers } });
     });
 
     activeSocket.on('error', ({ message }: { message: string }) => {
@@ -135,20 +148,47 @@ const Lobby = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket]);
 
-  return (
-    <>
-    <button className="back-btn" onClick={handleLeave}>← Leave</button>
-    <div className="lobby-wrapper">
-      <div className="lobby-card">
-        <h1 className="lobby-title">{roomName || '—'}</h1>
+  const myPlayerId = sessionStorage.getItem('poker_playerId');
 
-        <div className="room-code-display">
-          <p className="room-code-label">Room Code</p>
-          <p className="room-code-value">{roomCode || '—'}</p>
+  return (
+    <div className="th-wrapper">
+      <div className="th-card">
+        <div className="th-topbar">
+          <button className="th-leave" onClick={handleLeave}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Leave
+          </button>
+          <span className="th-brand">Red Dead Royal</span>
+        </div>
+
+        <div className="th-header">
+          <div className="th-eyebrow">Saloon Table</div>
+          <h1 className="th-title">{roomName || '—'}</h1>
+          <div className="th-divider">
+            <span />&#9824; &#9830; &#9827;<span />
+          </div>
+        </div>
+
+        <div className="th-field">
+          <label className="th-label" style={{ textAlign: 'center' }}>Room Code</label>
+          <div className="lobby-code-pill" onClick={handleCopyCode}>
+            <span className="lobby-code-value">{roomCode || '—'}</span>
+            <span className="lobby-copy-btn" aria-label="Copy room code">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </span>
+          </div>
+          <p className="lobby-code-hint">{copied ? 'Copied!' : 'Tap to Copy & Share'}</p>
         </div>
 
         <div className="char-select">
-          <p className="room-code-label">Choose Your Character</p>
+          <div className="lobby-section-head">
+            <label className="th-label">Choose Your Character</label>
+          </div>
           <div className="char-grid">
             {CHARACTERS.map(char => {
               const isTaken = takenCharacterIds.includes(char.id);
@@ -173,18 +213,42 @@ const Lobby = () => {
         </div>
 
         <div className="lobby-players">
-          <p className="room-code-label">Players</p>
-          <div className="lobby-players-grid">
-            {players.map((p) => (
-              <div key={p.nickname} className={`lobby-player-chip${p.disconnected ? ' disconnected' : ''}`}>
-                {p.nickname}{p.disconnected ? ' ⚠' : ''}
-              </div>
-            ))}
+          <div className="lobby-section-head">
+            <label className="th-label">Players at the Table</label>
           </div>
+          {players.map((p, i) => {
+            const character = p.characterId ? getCharacterById(p.characterId) : undefined;
+            const isSelf = !!p.id && p.id === myPlayerId;
+            const isRowHost = !!hostNickname && p.nickname === hostNickname;
+            const ready = !!p.characterId;
+            return (
+              <div key={p.id ?? `${p.nickname}-${i}`} className={`lobby-player-row${isSelf ? ' self' : ''}${p.disconnected ? ' disconnected' : ''}`}>
+                {character ? (
+                  <div className="lobby-player-avatar">
+                    <img src={character.img} alt={character.name} />
+                  </div>
+                ) : (
+                  <div className="lobby-player-avatar empty">&#9824;</div>
+                )}
+                <div className="lobby-player-info">
+                  <div className="lobby-player-name-row">
+                    <span className="lobby-player-name">{p.nickname}</span>
+                    {isRowHost && <span className="lobby-badge">Host</span>}
+                    {isSelf && !isRowHost && <span className="lobby-badge">You</span>}
+                  </div>
+                  <div className="lobby-player-sub">{character ? character.name : 'No character yet'}</div>
+                </div>
+                <span className={`lobby-player-status ${ready ? 'ready' : 'picking'}`}>
+                  <span className="lobby-status-dot" />
+                  {ready ? 'Ready' : 'Picking...'}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {gameActive && (
-          <button className="btn" onClick={() => {
+          <button className="th-cta" onClick={() => {
             const activeSocket = socket ?? connect();
             activeSocket.emit('joinRoom', {
               roomCode: sessionStorage.getItem('poker_roomCode'),
@@ -196,13 +260,12 @@ const Lobby = () => {
         )}
 
         {!gameActive && isHost && (
-          <button className="btn" onClick={() => socket?.emit('startGame', { roomCode })}>
+          <button className="th-cta" onClick={() => socket?.emit('startGame', { roomCode })}>
             Start Game
           </button>
         )}
       </div>
     </div>
-    </>
   );
 };
 

@@ -1,145 +1,114 @@
-.back-btn {
-  position: fixed;
-  top: 14px;
-  left: 14px;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.75);
-  font-family: 'Chinese Rocks';
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px 8px;
-  z-index: 100;
-  transition: color 150ms;
-}
+/* Lobby — reuses the gold/felt theme from JoinHost.css (.th-* classes) */
 
-.back-btn:hover {
-  color: white;
-}
-
-.lobby-wrapper {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* gear button (top-right of the top bar) */
+.lobby-gear {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  background: #111;
-  padding: 24px 16px;
-  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(213, 170, 73, 0.4);
+  background: rgba(20, 14, 8, 0.5);
+  color: #e9c766;
+  cursor: pointer;
+  transition: border-color 150ms ease;
 }
 
-.lobby-title {
-  color: #cb0000;
-  margin: 0;
-  text-shadow: 2px 2px 12px rgba(0, 0, 0, 0.9);
+.lobby-gear:hover {
+  border-color: rgba(213, 170, 73, 0.7);
 }
 
-.lobby-card {
+/* ---- room code pill ---- */
+.lobby-code-pill {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 480px;
-  box-sizing: border-box;
-}
-
-.lobby-option {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 32px;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: linear-gradient(#120a05, #221509);
+  border: 1.5px solid #4a2f1d;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  transition: border-color 150ms ease;
 }
 
-.lobby-option label {
-  font-family: 'Chinese Rocks';
-  font-size: 18px;
-  color: #ccc;
-  white-space: nowrap;
+.lobby-code-pill:hover {
+  border-color: #c79a3a;
 }
 
-.lobby-option input {
-  width: 90px;
-  background: #111;
-  border: 2px solid #444;
+.lobby-code-value {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 14px;
+  /* offset the trailing letter-spacing so the value reads centered */
+  text-indent: 14px;
+  color: #9dcea2;
+  text-shadow: 0 0 12px rgba(157, 206, 162, 0.45);
+}
+
+.lobby-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
-  color: #73ea9f;
-  font-family: 'Chinese Rocks';
-  font-size: 18px;
-  padding: 6px 10px;
-  text-align: right;
-  outline: none;
+  border: 1px solid #5b3a22;
+  background: linear-gradient(#2a1a12, #1a1009);
+  color: #e9c766;
+  cursor: pointer;
 }
 
-.lobby-option input:focus {
-  border-color: #73ea9f;
+.lobby-copy-btn:hover {
+  border-color: #c79a3a;
 }
 
-.lobby-divider {
-  border: none;
-  border-top: 2px solid #333;
-  margin: 4px 0;
-}
-
-.lobby-error {
-  color: #f87171;
-  font-size: 14px;
+.lobby-code-hint {
   text-align: center;
-  margin: 0;
+  margin: 10px 0 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8a7e64;
 }
 
-.lobby-players {
+/* ---- section heading row (label + count) ---- */
+.lobby-section-head {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
+  align-items: baseline;
+  justify-content: space-between;
 }
 
-.lobby-players-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 8px;
-  width: 100%;
+.lobby-section-head .th-label {
+  margin-bottom: 0;
 }
 
-.lobby-player-chip {
-  font-family: 'Chinese Rocks';
-  font-size: 13px;
-  color: #ccc;
-  border-radius: 8px;
-  padding: 6px 8px;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.lobby-count {
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #8a7e64;
 }
 
-.lobby-player-chip.disconnected {
-  opacity: 0.45;
-  color: #f87171;
-}
-
-.lobby-player-disconnected {
-  opacity: 0.45;
-  color: #f87171;
-}
-
-.lobby-start-btn {
-  font-size: 24px;
-  margin: 0;
-}
-
-/* ── Character Select ── */
+/* ---- character grid ---- */
 .char-select {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
 }
 
 .char-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 10px;
   width: 100%;
 }
@@ -148,33 +117,40 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   border-radius: 12px;
-  padding: 10px 6px;
+  padding: 6px 4px;
   cursor: pointer;
-  transition: border-color 150ms, background 150ms, opacity 150ms;
   background: none;
   border: none;
-  max-width: 72px;
-  margin: 0 auto;
+  transition: opacity 150ms ease;
 }
 
-.char-card.taken > .char-img-wrapper > .char-img {
-  opacity: 0.6;
+.char-card:disabled {
   cursor: not-allowed;
 }
 
 .char-img-wrapper {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
+  border-radius: 11px;
+  padding: 2px;
+  background: #2a1c10;
+  border: 1.5px solid #4a2f1d;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.char-card.taken > .char-img-wrapper > .char-img {
+  opacity: 0.45;
 }
 
 .char-img {
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 9px;
+  display: block;
 }
 
 .char-overlay {
@@ -187,9 +163,151 @@
 }
 
 .char-name {
-  font-family: 'Chinese Rocks';
-  font-size: 11px;
-  color: #ccc;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #a98f63;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.char-card.selected .char-name {
+  color: #e9c766;
+}
+
+/* ---- players at the table ---- */
+.lobby-players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.lobby-player-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(#140d07, #1d130a);
+  border: 1.5px solid #3a2615;
+}
+
+.lobby-player-row.self {
+  border-color: #c79a3a;
+  box-shadow: 0 0 0 1px rgba(213, 170, 73, 0.25), 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.lobby-player-row.disconnected {
+  opacity: 0.45;
+}
+
+.lobby-player-avatar {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 11px;
+  padding: 2px;
+  background: linear-gradient(160deg, #e9c766, #a87b2e);
+}
+
+.lobby-player-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  object-fit: cover;
+  display: block;
+  border: 1px solid #160d06;
+}
+
+.lobby-player-avatar.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(#241710, #160d06);
+  border: 1.5px solid #4a2f1d;
+  color: #6b563c;
+  font-size: 20px;
+}
+
+.lobby-player-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.lobby-player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lobby-player-name {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 18px;
+  color: #f3ead4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lobby-badge {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid #5b3a22;
+  background: linear-gradient(#2a1a12, #1c110b);
+  color: #e9c766;
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.lobby-player-sub {
+  margin-top: 2px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: #8a7e64;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lobby-player-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.lobby-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.lobby-player-status.ready {
+  color: #6fcf8a;
+}
+
+.lobby-player-status.ready .lobby-status-dot {
+  background: #6fcf8a;
+  box-shadow: 0 0 8px rgba(111, 207, 138, 0.6);
+}
+
+.lobby-player-status.picking {
+  color: #6b6450;
+}
+
+.lobby-player-status.picking .lobby-status-dot {
+  background: #6b6450;
 }

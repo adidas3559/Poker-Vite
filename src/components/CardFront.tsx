@@ -6,14 +6,16 @@ interface props {
 }
 
 const CardFront = (props: props) => {
-  // console.log('🚀 ~ CardFront ~ props:', props);
+  console.log('🚀 ~ CardFront ~ props:', props);
 
   const renderCard = () => {
     // let cardType: Suit;
-    const title: string = `${props.card.suit}-${props.card.number}`;
+    const title: string = `${props.card.number}-${props.card.suit}`;
+    console.log('🚀 ~ renderCard ~ title:', title);
 
     return (
-      <img src={`../assets/cards/${title}.png`} alt="" />
+      <img src={`../assets/cardsAlt/${title}.svg`} alt="" />
+      // <img src='../assets/cardsAlt/spades-queen.svg' />
     )
   }
 
